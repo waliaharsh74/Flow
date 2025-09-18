@@ -1,0 +1,483 @@
+import { useState } from 'react';
+import { useWorkflowStore } from '../store/workflow';
+import { FormField, IfCondition } from '../types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
+
+const SidePanel = () => {
+  const { nodes, selectedNodeId, updateNode, deleteNode, resetWorkflow, changeTriggerType, startNodeId } = useWorkflowStore();
+  
+  const selectedNode = nodes.find(n => n.id === selectedNodeId);
+
+  if (!selectedNode) {
+    return (
+      <div className="w-80 bg-workflow-node border-l border-border p-4">
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-muted-foreground">Select a node to edit its properties</p>
+        </div>
+      </div>
+    );
+  }
+
+  const updateParameter = (key: string, value: any) => {
+    updateNode(selectedNode.id, {
+      parameters: {
+        ...selectedNode.data.parameters,
+        [key]: value
+      }
+    });
+  };
+
+  const handleDelete = () => {
+    if (selectedNode.id === startNodeId) {
+      const shouldDelete = window.confirm(
+        'This is your start trigger. Deleting it will remove the entire workflow. You can also change the trigger type instead.\n\nDo you want to delete the entire workflow?'
+      );
+      
+      if (shouldDelete) {
+        resetWorkflow();
+      }
+    } else {
+      const shouldDelete = window.confirm('Delete this node and its connections?');
+      if (shouldDelete) {
+        deleteNode(selectedNode.id);
+      }
+    }
+  };
+
+  const renderTriggerEditor = () => {
+    switch (selectedNode.data.kind) {
+      case 'trigger.manual':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This trigger starts the workflow manually when executed.
+            </p>
+          </div>
+        );
+
+      case 'trigger.form':
+        return <FormTriggerEditor node={selectedNode} updateParameter={updateParameter} />;
+
+      case 'trigger.cron':
+        return <CronTriggerEditor node={selectedNode} updateParameter={updateParameter} />;
+
+      default:
+        return null;
+    }
+  };
+
+  const renderActionEditor = () => {
+    switch (selectedNode.data.kind) {
+      case 'action.telegram':
+        return <TelegramActionEditor node={selectedNode} updateParameter={updateParameter} />;
+
+      case 'action.email':
+        return <EmailActionEditor node={selectedNode} updateParameter={updateParameter} />;
+
+      case 'action.llm':
+        return <LLMActionEditor node={selectedNode} updateParameter={updateParameter} />;
+
+      default:
+        return null;
+    }
+  };
+
+  const renderLogicEditor = () => {
+    if (selectedNode.data.kind === 'logic.if') {
+      return <IfLogicEditor node={selectedNode} updateParameter={updateParameter} />;
+    }
+    return null;
+  };
+
+  return (
+    <div className="w-80 bg-workflow-node border-l border-border p-4 overflow-y-auto">
+      <div className="space-y-6">
+\        <div>
+          <h2 className="text-lg font-semibold text-foreground mb-2">
+            {selectedNode.data.kind.replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+          </h2>
+          <div className="flex gap-2">
+            {selectedNode.id === startNodeId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const triggers = ['trigger.manual', 'trigger.form', 'trigger.cron'];
+                  const currentIndex = triggers.indexOf(selectedNode.data.kind);
+                  const nextTrigger = triggers[(currentIndex + 1) % triggers.length];
+                  changeTriggerType(nextTrigger as any);
+                }}
+              >
+                Change Type
+              </Button>
+            )}
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              Delete
+            </Button>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-2">
+          <Label>Name</Label>
+          <Input
+            value={selectedNode.data.parameters.name || ''}
+            onChange={(e) => updateParameter('name', e.target.value)}
+            placeholder="Enter node name"
+          />
+        </div>
+
+        <Separator />
+
+        {selectedNode.data.kind.startsWith('trigger.') && renderTriggerEditor()}
+        {selectedNode.data.kind.startsWith('action.') && renderActionEditor()}
+        {selectedNode.data.kind.startsWith('logic.') && renderLogicEditor()}
+      </div>
+    </div>
+  );
+};
+
+const FormTriggerEditor = ({ node, updateParameter }: any) => {
+  const [newField, setNewField] = useState<FormField>({ fieldLabel: '', requiredField: false });
+
+  const addField = () => {
+    if (!newField.fieldLabel) return;
+    
+    const currentFields = node.data.parameters.formFields?.values || [];
+    updateParameter('formFields', {
+      values: [...currentFields, newField]
+    });
+    setNewField({ fieldLabel: '', requiredField: false });
+  };
+
+  const removeField = (index: number) => {
+    const currentFields = node.data.parameters.formFields?.values || [];
+    updateParameter('formFields', {
+      values: currentFields.filter((_: any, i: number) => i !== index)
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>Form Title</Label>
+        <Input
+          value={node.data.parameters.formTitle || ''}
+          onChange={(e) => updateParameter('formTitle', e.target.value)}
+          placeholder="Enter form title"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Form Description</Label>
+        <Textarea
+          value={node.data.parameters.formDescription || ''}
+          onChange={(e) => updateParameter('formDescription', e.target.value)}
+          placeholder="Enter form description"
+          rows={3}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Form Fields</Label>
+        <div className="space-y-2">
+          {(node.data.parameters.formFields?.values || []).map((field: FormField, index: number) => (
+            <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+              <span className="flex-1 text-sm">{field.fieldLabel}</span>
+              {field.requiredField && (
+                <span className="text-xs text-destructive">Required</span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeField(index)}
+              >
+                ×
+              </Button>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-2 p-3 bg-muted rounded">
+          <Input
+            placeholder="Field label"
+            value={newField.fieldLabel}
+            onChange={(e) => setNewField({ ...newField, fieldLabel: e.target.value })}
+          />
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="required"
+              checked={newField.requiredField}
+              onCheckedChange={(checked) => setNewField({ ...newField, requiredField: !!checked })}
+            />
+            <Label htmlFor="required">Required field</Label>
+          </div>
+          <Button onClick={addField} disabled={!newField.fieldLabel}>
+            Add Field
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CronTriggerEditor = ({ node, updateParameter }: any) => (
+  <div className="space-y-4">
+    <div className="space-y-2">
+      <Label>Cron Expression</Label>
+      <Input
+        value={node.data.parameters.cronExpression || ''}
+        onChange={(e) => updateParameter('cronExpression', e.target.value)}
+        placeholder="0 0 * * *"
+      />
+      <p className="text-xs text-muted-foreground">
+        Format: minute hour day month weekday
+      </p>
+    </div>
+
+    <div className="space-y-2">
+      <Label>Timezone</Label>
+      <Input
+        value={node.data.parameters.timezone || 'UTC'}
+        onChange={(e) => updateParameter('timezone', e.target.value)}
+        placeholder="UTC"
+      />
+    </div>
+  </div>
+);
+
+const TelegramActionEditor = ({ node, updateParameter }: any) => (
+  <div className="space-y-4">
+    <div className="space-y-2">
+      <Label>Chat ID</Label>
+      <Input
+        value={node.data.parameters.chatId || ''}
+        onChange={(e) => updateParameter('chatId', e.target.value)}
+        placeholder="Enter chat ID"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <Label>Message</Label>
+      <Textarea
+        value={node.data.parameters.message || ''}
+        onChange={(e) => updateParameter('message', e.target.value)}
+        placeholder="Enter message to send"
+        rows={4}
+      />
+    </div>
+  </div>
+);
+
+const EmailActionEditor = ({ node, updateParameter }: any) => (
+  <div className="space-y-4">
+    <div className="space-y-2">
+      <Label>To</Label>
+      <Input
+        value={node.data.parameters.to || ''}
+        onChange={(e) => updateParameter('to', e.target.value)}
+        placeholder="recipient@example.com"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <Label>Subject</Label>
+      <Input
+        value={node.data.parameters.subject || ''}
+        onChange={(e) => updateParameter('subject', e.target.value)}
+        placeholder="Email subject"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <Label>HTML Content</Label>
+      <Textarea
+        value={node.data.parameters.html || ''}
+        onChange={(e) => updateParameter('html', e.target.value)}
+        placeholder="HTML email content"
+        rows={4}
+      />
+    </div>
+
+    <div className="space-y-2">
+      <Label>Text Content</Label>
+      <Textarea
+        value={node.data.parameters.text || ''}
+        onChange={(e) => updateParameter('text', e.target.value)}
+        placeholder="Plain text email content"
+        rows={4}
+      />
+    </div>
+  </div>
+);
+
+const LLMActionEditor = ({ node, updateParameter }: any) => (
+  <div className="space-y-4">
+    <div className="space-y-2">
+      <Label>Provider</Label>
+      <Select
+        value={node.data.parameters.provider || 'openai'}
+        onValueChange={(value) => updateParameter('provider', value)}
+      >
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="openai">OpenAI</SelectItem>
+          <SelectItem value="anthropic">Anthropic</SelectItem>
+          <SelectItem value="gemini">Google Gemini</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+
+    <div className="space-y-2">
+      <Label>Model</Label>
+      <Input
+        value={node.data.parameters.model || 'gpt-3.5-turbo'}
+        onChange={(e) => updateParameter('model', e.target.value)}
+        placeholder="gpt-3.5-turbo"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <Label>Prompt</Label>
+      <Textarea
+        value={node.data.parameters.prompt || ''}
+        onChange={(e) => updateParameter('prompt', e.target.value)}
+        placeholder="Enter your prompt"
+        rows={6}
+      />
+    </div>
+  </div>
+);
+
+const IfLogicEditor = ({ node, updateParameter }: any) => {
+  const conditions = node.data.parameters.conditions?.conditions || [];
+  
+  const addCondition = () => {
+    const newCondition: IfCondition = {
+      id: `condition_${Date.now()}`,
+      leftValue: '',
+      rightValue: '',
+      operator: {
+        type: 'string',
+        operation: 'equals',
+        name: 'equals'
+      }
+    };
+    
+    updateParameter('conditions', {
+      ...node.data.parameters.conditions,
+      conditions: [...conditions, newCondition]
+    });
+  };
+
+  const removeCondition = (id: string) => {
+    updateParameter('conditions', {
+      ...node.data.parameters.conditions,
+      conditions: conditions.filter((c: IfCondition) => c.id !== id)
+    });
+  };
+
+  const updateCondition = (id: string, field: string, value: any) => {
+    updateParameter('conditions', {
+      ...node.data.parameters.conditions,
+      conditions: conditions.map((c: IfCondition) => 
+        c.id === id ? { ...c, [field]: value } : c
+      )
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label>Conditions</Label>
+          <Button onClick={addCondition} size="sm">Add Condition</Button>
+        </div>
+        
+        {conditions.map((condition: IfCondition) => (
+          <div key={condition.id} className="space-y-2 p-3 bg-muted rounded">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Condition</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeCondition(condition.id)}
+              >
+                ×
+              </Button>
+            </div>
+            
+            <Input
+              placeholder="Left value"
+              value={condition.leftValue}
+              onChange={(e) => updateCondition(condition.id, 'leftValue', e.target.value)}
+            />
+            
+            <Select
+              value={condition.operator.operation}
+              onValueChange={(value) => updateCondition(condition.id, 'operator', {
+                ...condition.operator,
+                operation: value,
+                name: value
+              })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="equals">Equals</SelectItem>
+                <SelectItem value="notEquals">Not Equals</SelectItem>
+                <SelectItem value="gt">Greater Than</SelectItem>
+                <SelectItem value="lt">Less Than</SelectItem>
+                <SelectItem value="contains">Contains</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Input
+              placeholder="Right value"
+              value={condition.rightValue}
+              onChange={(e) => updateCondition(condition.id, 'rightValue', e.target.value)}
+            />
+          </div>
+        ))}
+      </div>
+
+      {conditions.length > 1 && (
+        <div className="space-y-2">
+          <Label>Combinator</Label>
+          <Select
+            value={node.data.parameters.conditions?.combinator || 'and'}
+            onValueChange={(value) => updateParameter('conditions', {
+              ...node.data.parameters.conditions,
+              combinator: value
+            })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="and">AND</SelectItem>
+              <SelectItem value="or">OR</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SidePanel;
