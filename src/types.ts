@@ -101,3 +101,9 @@ export interface ValidationResult {
   ok: boolean;
   errors: string[];
 }
+export interface PaletteItem {
+  kind: NodeKind;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}

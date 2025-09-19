@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -16,6 +16,7 @@ import 'reactflow/dist/style.css';
 import { useWorkflowStore } from '../store/workflow';
 import { RFNode, RFEdge } from '../types';
 import WorkflowNode from './WorkflowNode';
+import { triggerItems } from '@/Items-data';
 
 const nodeTypes = {
   workflow: WorkflowNode,
@@ -31,6 +32,9 @@ const WorkflowBuilder = () => {
     validate,
     setNode
   } = useWorkflowStore();
+    const [isOpen, setIsOpen] = useState(false);
+    console.log(isOpen);
+  
 
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(edges);
@@ -124,12 +128,54 @@ const WorkflowBuilder = () => {
           <h3 className="text-xl font-semibold mb-2 text-foreground">Start Building Your Workflow</h3>
           <p className="text-muted-foreground mb-6">Begin by adding a trigger to start your automation</p>
           <button 
-            onClick={() => useWorkflowStore.getState().addTrigger('trigger.manual')}
+            onClick={() => setIsOpen(true)}
             className="bg-workflow-trigger hover:bg-workflow-trigger/90 text-white px-6 py-3 rounded-lg font-medium transition-colors"
           >
             + Add Trigger
           </button>
         </div>
+         {isOpen && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-workflow-node rounded-lg shadow-xl p-6 w-96 max-w-[90vw]">
+                  <h3 className="text-lg font-semibold mb-4 text-foreground">Select Trigger Type</h3>
+                  <div className="space-y-2 mb-6">
+                    {triggerItems.map((item) => (
+                      <button
+                        key={item.kind}
+                        onClick={() => {
+                          // useWorkflowStore.getState().addTrigger('trigger.manual')
+                          useWorkflowStore.getState().addTrigger(item.kind as any);
+                          setIsOpen(false);
+                        }}
+                        className="w-full p-3 bg-workflow-node hover:bg-muted rounded-lg border border-border transition-colors text-left group"
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-workflow-trigger text-white rounded-md">
+                            {item.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm text-foreground">
+                              {item.label}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {item.description}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setIsOpen(false)}
+                      className="flex-1 px-4 py-2 bg-muted hover:bg-muted/80 text-foreground rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
       </div>
     );
   }
@@ -166,6 +212,7 @@ const WorkflowBuilder = () => {
           }}
         />
       </ReactFlow>
+     
     </div>
   );
 };
