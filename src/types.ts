@@ -30,6 +30,7 @@ export interface RFNodeData {
   parameters: any;
   credentials?: Record<string, { id: string; name: string }>;
   webhookId?: string;
+  toolBar?:any
 }
 
 export interface RFNode extends Node {

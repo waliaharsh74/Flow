@@ -8,25 +8,25 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
+import { Trash } from 'lucide-react';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const SidePanel = () => {
   const { nodes, selectedNodeId, updateNode, deleteNode, resetWorkflow, changeTriggerType, startNodeId } = useWorkflowStore();
-  
+
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
 
   if (!selectedNode) {
-    return (
-      <div className="w-80 bg-workflow-node border-l border-border p-4">
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <p className="text-muted-foreground">Select a node to edit its properties</p>
-        </div>
-      </div>
-    );
+    return;
   }
 
   const updateParameter = (key: string, value: any) => {
@@ -40,18 +40,11 @@ const SidePanel = () => {
 
   const handleDelete = () => {
     if (selectedNode.id === startNodeId) {
-      const shouldDelete = window.confirm(
-        'This is your start trigger. Deleting it will remove the entire workflow. You can also change the trigger type instead.\n\nDo you want to delete the entire workflow?'
-      );
-      
-      if (shouldDelete) {
-        resetWorkflow();
-      }
+      resetWorkflow();
+
     } else {
-      const shouldDelete = window.confirm('Delete this node and its connections?');
-      if (shouldDelete) {
-        deleteNode(selectedNode.id);
-      }
+      deleteNode(selectedNode.id);
+
     }
   };
 
@@ -103,28 +96,34 @@ const SidePanel = () => {
   return (
     <div className="w-80 bg-workflow-node border-l border-border p-4 overflow-y-auto">
       <div className="space-y-6">
-\        <div>
+        <div>
           <h2 className="text-lg font-semibold text-foreground mb-2">
             {selectedNode.data.kind.replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase())}
           </h2>
+
           <div className="flex gap-2">
-            {selectedNode.id === startNodeId && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const triggers = ['trigger.manual', 'trigger.form', 'trigger.cron'];
-                  const currentIndex = triggers.indexOf(selectedNode.data.kind);
-                  const nextTrigger = triggers[(currentIndex + 1) % triggers.length];
-                  changeTriggerType(nextTrigger as any);
-                }}
-              >
-                Change Type
-              </Button>
-            )}
-            <Button variant="destructive" size="sm" onClick={handleDelete}>
-              Delete
-            </Button>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  {/* onClick={handleDelete}> */}
+                  <Trash />
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Are you absolutely sure?</DialogTitle>
+                  <DialogDescription>
+                    {selectedNode.id === startNodeId
+                      ? "This is your start trigger. Deleting it will remove the entire workflow. Do you want to delete the entire workflow?"
+                      : "Delete this node and its connections?"}
+
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant='destructive' onClick={handleDelete}>Confirm</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
 
@@ -154,7 +153,7 @@ const FormTriggerEditor = ({ node, updateParameter }: any) => {
 
   const addField = () => {
     if (!newField.fieldLabel) return;
-    
+
     const currentFields = node.data.parameters.formFields?.values || [];
     updateParameter('formFields', {
       values: [...currentFields, newField]
@@ -365,7 +364,7 @@ const LLMActionEditor = ({ node, updateParameter }: any) => (
 
 const IfLogicEditor = ({ node, updateParameter }: any) => {
   const conditions = node.data.parameters.conditions?.conditions || [];
-  
+
   const addCondition = () => {
     const newCondition: IfCondition = {
       id: `condition_${Date.now()}`,
@@ -377,7 +376,7 @@ const IfLogicEditor = ({ node, updateParameter }: any) => {
         name: 'equals'
       }
     };
-    
+
     updateParameter('conditions', {
       ...node.data.parameters.conditions,
       conditions: [...conditions, newCondition]
@@ -394,7 +393,7 @@ const IfLogicEditor = ({ node, updateParameter }: any) => {
   const updateCondition = (id: string, field: string, value: any) => {
     updateParameter('conditions', {
       ...node.data.parameters.conditions,
-      conditions: conditions.map((c: IfCondition) => 
+      conditions: conditions.map((c: IfCondition) =>
         c.id === id ? { ...c, [field]: value } : c
       )
     });
@@ -407,7 +406,7 @@ const IfLogicEditor = ({ node, updateParameter }: any) => {
           <Label>Conditions</Label>
           <Button onClick={addCondition} size="sm">Add Condition</Button>
         </div>
-        
+
         {conditions.map((condition: IfCondition) => (
           <div key={condition.id} className="space-y-2 p-3 bg-muted rounded">
             <div className="flex items-center justify-between">
@@ -420,13 +419,13 @@ const IfLogicEditor = ({ node, updateParameter }: any) => {
                 ×
               </Button>
             </div>
-            
+
             <Input
               placeholder="Left value"
               value={condition.leftValue}
               onChange={(e) => updateCondition(condition.id, 'leftValue', e.target.value)}
             />
-            
+
             <Select
               value={condition.operator.operation}
               onValueChange={(value) => updateCondition(condition.id, 'operator', {
@@ -446,7 +445,7 @@ const IfLogicEditor = ({ node, updateParameter }: any) => {
                 <SelectItem value="contains">Contains</SelectItem>
               </SelectContent>
             </Select>
-            
+
             <Input
               placeholder="Right value"
               value={condition.rightValue}

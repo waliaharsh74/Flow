@@ -1,7 +1,8 @@
-import { memo } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { memo, useCallback } from 'react';
+import { Handle, Position, NodeProps, NodeToolbar ,Node} from 'reactflow';
 import { RFNodeData } from '../types';
 import { useWorkflowStore } from '../store/workflow';
+import { SquarePen, Trash } from 'lucide-react';
 
 const getNodeIcon = (kind: string) => {
   if (kind.startsWith('trigger.')) {
@@ -69,21 +70,30 @@ const getParameterSummary = (kind: string, parameters: any) => {
 };
 
 const WorkflowNode = memo(({ data, selected }: NodeProps<RFNodeData>) => {
-  const { selectedNodeId } = useWorkflowStore();
+  const { selectedNodeId, deleteNode ,} = useWorkflowStore();
   const isSelected = selected || selectedNodeId === data.parameters?.name;
+
 
   const nodeColor = getNodeColor(data.kind);
   const icon = getNodeIcon(data.kind);
   const typeLabel = getNodeTypeLabel(data.kind);
   const summary = getParameterSummary(data.kind, data.parameters);
+ 
 
   return (
+
     <div className={`
       bg-workflow-node border-2 rounded-lg shadow-lg min-w-[200px] 
       ${isSelected ? 'border-primary' : 'border-workflow-node-shadow'}
       hover:shadow-xl transition-all duration-200
     `}>
-      {/* Input Handle - Not for triggers */}
+      <NodeToolbar isVisible>
+        <div className='flex justify-between gap-4'>
+
+          <button ><SquarePen /></button>
+          {/* <button onClick={() => deleteNode(selectedNodeId)}><Trash /></button> */}
+        </div>
+      </NodeToolbar>
       {!data.kind.startsWith('trigger.') && (
         <Handle
           type="target"
@@ -92,13 +102,11 @@ const WorkflowNode = memo(({ data, selected }: NodeProps<RFNodeData>) => {
         />
       )}
 
-      {/* Node Header */}
       <div className={`px-3 py-2 rounded-t-lg ${nodeColor} flex items-center gap-2`}>
         {icon}
         <span className="text-sm font-medium">{typeLabel}</span>
       </div>
 
-      {/* Node Content */}
       <div className="p-3">
         <div className="font-medium text-sm text-foreground mb-1">
           {data.parameters?.name || 'Unnamed'}
@@ -110,7 +118,6 @@ const WorkflowNode = memo(({ data, selected }: NodeProps<RFNodeData>) => {
         )}
       </div>
 
-      {/* Output Handles */}
       {data.kind === 'logic.if' ? (
         <>
           <Handle
