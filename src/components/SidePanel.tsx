@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog"
 
 const SidePanel = () => {
-  const { nodes, selectedNodeId, updateNode, deleteNode, resetWorkflow, changeTriggerType, startNodeId } = useWorkflowStore();
+  const { nodes, selectedNodeId, updateNode, deleteNode, resetWorkflow,getWorkflowState, changeTriggerType, startNodeId } = useWorkflowStore();
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
 

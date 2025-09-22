@@ -12,26 +12,27 @@ const TopBar = () => {
   const { toast } = useToast();
 
   const handleExport = () => {
-    const validation = validate();
-    if (!validation.ok) {
-      toast({
-        title: 'Export Failed',
-        description: `Please fix these issues first: ${validation.errors.join(', ')}`,
-        variant: 'destructive'
-      });
-      return;
-    }
+    // const validation = validate();
+    // if (!validation.ok) {
+    //   toast({
+    //     title: 'Export Failed',
+    //     description: `Please fix these issues first: ${validation.errors.join(', ')}`,
+    //     variant: 'destructive'
+    //   });
+    //   return;
+    // }
 
     const schema = exportSchema();
-    const blob = new Blob([JSON.stringify(schema, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${workflowName.toLowerCase().replace(/\s+/g, '-')}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    localStorage.setItem("localState",JSON.stringify(schema))
+    // const blob = new Blob([JSON.stringify(schema, null, 2)], { type: 'application/json' });
+    // const url = URL.createObjectURL(blob);
+    // const a = document.createElement('a');
+    // a.href = url;
+    // a.download = `${workflowName.toLowerCase().replace(/\s+/g, '-')}.json`;
+    // document.body.appendChild(a);
+    // a.click();
+    // document.body.removeChild(a);
+    // URL.revokeObjectURL(url);
 
     toast({
       title: 'Export Successful',
@@ -41,8 +42,9 @@ const TopBar = () => {
 
   const handleImport = () => {
     try {
-      const schema = JSON.parse(importJson);
-      importSchema(schema);
+      // const schema = JSON.parse(importJson);
+      const schema=localStorage.getItem("localState")
+      importSchema(JSON.parse(schema));
       setIsImporting(false);
       setImportJson('');
       
@@ -88,14 +90,17 @@ const TopBar = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsImporting(true)}>
+          {/* <Button variant="outline" onClick={() => setIsImporting(true)}>
             Import
+          </Button> */}
+          <Button variant="outline" onClick={() => handleImport()}>
+            Load workflow
           </Button>
           <Button variant="outline" onClick={handleValidate}>
             Validate
           </Button>
           <Button onClick={handleExport}>
-            Export
+            Save workflow
           </Button>
         </div>
       </div>

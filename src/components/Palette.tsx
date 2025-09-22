@@ -7,7 +7,7 @@ import { actionItems, logicItems, triggerItems } from '@/Items-data';
 
 
 const Palette = () => {
-  const { nodes, addTrigger, addAction, addIf } = useWorkflowStore();
+  const { nodes, addTrigger, addAction, addIf ,getWorkflowState} = useWorkflowStore();
   const [isOpen, setIsOpen] = useState(false);
 
   const hasTrigger = nodes.some(node => node.data.kind.startsWith('trigger.'));
@@ -91,7 +91,7 @@ const Palette = () => {
       </div>
 
       <div className="border-t border-border pt-4">
-        <button
+         <button
           onClick={() => setIsOpen(true)}
           className="w-full p-3 bg-workflow-trigger/10 hover:bg-workflow-trigger/20 rounded-lg border border-workflow-trigger/30 transition-colors text-left"
         >
@@ -101,7 +101,7 @@ const Palette = () => {
           <div className="text-xs text-workflow-trigger/70">
             Switch to different trigger
           </div>
-        </button>
+        </button> 
       </div>
 
       

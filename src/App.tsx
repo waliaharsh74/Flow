@@ -9,6 +9,7 @@ import TopBar from "./components/TopBar";
 import WorkflowBuilder from "./components/WorkflowBuilder";
 import Palette from "./components/Palette";
 import SidePanel from "./components/SidePanel";
+import FormBuilder from "./components/FormBuilder";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/form" element={<FormBuilder />} />
           {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
       </BrowserRouter>

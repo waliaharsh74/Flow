@@ -25,7 +25,8 @@ interface WorkflowStore extends WorkflowState {
   exportSchema: () => ExportSchema;
   resetWorkflow: () => void;
   changeTriggerType: (newKind: Extract<NodeKind, 'trigger.manual' | 'trigger.form' | 'trigger.cron'>) => void;
-  setNode: (newNode:RFNode) => void
+  setNode: (newNode:RFNode) => void,
+  getWorkflowState:()=>WorkflowState
     
   
 
@@ -110,6 +111,13 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   startNodeId: undefined,
   selectedNodeId: null,
   workflowName: 'My Workflow',
+
+  getWorkflowState:()=>{
+    const {nodes,edges,startNodeId,workflowName}=get()
+    return {
+      nodes, edges, startNodeId, workflowName
+    }
+  },
 
   setNode:(newNode)=>{
     const { nodes } = get();
