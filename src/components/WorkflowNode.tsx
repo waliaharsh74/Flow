@@ -62,8 +62,8 @@ const getParameterSummary = (kind: string, parameters: any) => {
     case 'action.llm':
       return `${parameters.provider || 'openai'}: ${parameters.model || 'gpt-3.5-turbo'}`;
     case 'logic.if':
-      const conditionsCount = parameters.conditions?.conditions?.length || 0;
-      return `${conditionsCount} condition${conditionsCount !== 1 ? 's' : ''}`;
+     { const conditionsCount = parameters.conditions?.conditions?.length || 0
+      return `${conditionsCount} condition${conditionsCount !== 1 ? 's' : ''}`};
     default:
       return '';
   }

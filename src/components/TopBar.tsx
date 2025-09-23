@@ -80,7 +80,7 @@ const TopBar = () => {
   return (
     <>
       <div className="h-16 bg-workflow-node border-b border-border flex items-center px-6 gap-4">
-        <div className="flex-1">
+        <div className="flex">
           <Input
             value={workflowName}
             onChange={(e) => setWorkflowName(e.target.value)}
@@ -93,7 +93,7 @@ const TopBar = () => {
           {/* <Button variant="outline" onClick={() => setIsImporting(true)}>
             Import
           </Button> */}
-          <Button variant="outline" onClick={() => handleImport()}>
+          {/* <Button variant="outline" onClick={() => handleImport()}>
             Load workflow
           </Button>
           <Button variant="outline" onClick={handleValidate}>
@@ -101,7 +101,7 @@ const TopBar = () => {
           </Button>
           <Button onClick={handleExport}>
             Save workflow
-          </Button>
+          </Button> */}
         </div>
       </div>
 

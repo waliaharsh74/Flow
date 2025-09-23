@@ -9,6 +9,8 @@ export type NodeKind =
   | 'action.email'
   | 'action.llm';
 
+export type AppState = "loading" | "auth" | "dashboard" | "editor"
+
 export interface FormField {
   fieldLabel: string;
   requiredField?: boolean;
