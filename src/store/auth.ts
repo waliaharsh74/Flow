@@ -22,7 +22,7 @@ interface AuthActions {
   checkAuth: () => Promise<void>
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/v1"
+const API_BASE_URL = import.meta.env.VITE_API_URL 
 
 export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
@@ -41,7 +41,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             headers: {
               "Content-Type": "application/json",
             },
-            credentials: "include", // Include cookies
+            credentials: "include", 
             body: JSON.stringify({ email, password }),
           })
 

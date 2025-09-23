@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env._API_URL || "http://localhost:3000/api/v1/"
+import { RFEdge, RFNode } from "@/types"
+
+const API_BASE_URL = import.meta.env.VITE_API_URL 
 
 export class ApiError extends Error {
   constructor(
@@ -40,7 +42,7 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
   }
 }
 
-    export const authApi = {
+  export const authApi = {
   signIn: (email: string, password: string) =>
     apiRequest("/sign-up", {
       method: "POST",
@@ -63,5 +65,13 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
   refreshToken: () =>
     apiRequest("/refresh-token", {
       method: "POST",
+    }),
+}
+
+export const workFlowApi={
+  saveWorflowDb: (id: string, workflowName: string, nodes: RFNode[] , edges:RFEdge[] , startNodeId:string, isActive:boolean) =>
+    apiRequest("/workflows", {
+      method: "POST",
+      body: JSON.stringify({ id, workflowName, nodes, edges , startNodeId, isActive }),
     }),
 }
