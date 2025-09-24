@@ -5,7 +5,7 @@ import SidePanel from "../components/SidePanel";
 import { AppState } from "@/types";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth";
-import { useWorkflowsStore } from "@/store/worflows";
+import { useWorkflowsStore } from "@/store/workflows";
 import { WorkflowDashboard } from "@/components/WorkFlowDashboard";
 import { AuthPage } from "@/components/AuthPage";
 import { WorkflowEditor } from "@/components/WorkFlowEditor";
