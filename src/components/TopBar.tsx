@@ -4,37 +4,51 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useWorkflowsStore } from '@/store/worflows';
-import { workFlowApi } from '../utils/api'
+import { useWorkflowsStore } from '@/store/workflows';
 
 const TopBar = ({ workflowId }) => {
   const { workflowName, setWorkflowName, validate, importSchema } = useWorkflowStore();
-  const { loadWorkflow } = useWorkflowsStore();
+  const { loadWorkflow, updateWorkflow } = useWorkflowsStore();
   const [isImporting, setIsImporting] = useState(false);
   const [importJson, setImportJson] = useState('');
   const { toast } = useToast();
 
   const handleExport = async () => {
     try {
-
-      const workflowData = loadWorkflow(workflowId)
-      const { name: workflowName, nodes, edges, startNodeId } = workflowData
-      // await workFlowApi.saveWorflowDb(workflowId,name,description,nodes,edges,startNodeId,isActive)
-      const reqObj = {
-        workflowName,
-        nodes,
-        edges, startNodeId
+      const workflowData = loadWorkflow(workflowId);
+      if (!workflowData) {
+        toast({
+          title: 'Error!',
+          description: 'Workflow not found',
+          variant: 'destructive'
+        });
+        return;
       }
 
-      const data = await workFlowApi.updateWorkFlow(workflowId, reqObj)
-      toast({
-        title: 'Saved!',
-        description: 'Workflow saved successfully'
+      const result = await updateWorkflow(workflowId, {
+        name: workflowData.name,
+        description: workflowData.description,
+        nodes: workflowData.nodes,
+        edges: workflowData.edges,
+        startNodeId: workflowData.startNodeId,
+        isActive: workflowData.isActive,
       });
 
+      if (result.success) {
+        toast({
+          title: 'Saved!',
+          description: 'Workflow saved successfully'
+        });
+      } else {
+        toast({
+          title: 'Error!',
+          description: result.error || "Can't Save WorkFlow",
+          variant: 'destructive'
+        });
+      }
 
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
         title: 'Error!',
         description:"Can't Save WorkFlow "
