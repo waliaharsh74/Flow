@@ -54,7 +54,7 @@ export function WorkflowEditor({ workflowId, onBackToDashboard }: WorkflowEditor
           Back to Dashboard
         </Button>
         <div className="flex-1">
-          <TopBar />
+          <TopBar workflowId={workflowId}/>
         </div>
       </div>
 

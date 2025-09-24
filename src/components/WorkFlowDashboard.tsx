@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "./../components/ui/button"
 import { Input } from "./../components/ui/input"
 import { Label } from "./../components/ui/label"
@@ -23,6 +23,8 @@ import { useWorkflowsStore } from "../store/worflows"
 import { useAuthStore } from "../store/auth"
 import { formatDistanceToNow } from "date-fns"
 import { Plus, MoreVertical, Play, Copy, Trash2, Edit, FileDown, FileUp, LogOut } from "lucide-react"
+import { workFlowApi } from "@/utils/api"
+import { useToast } from "@/hooks/use-toast"
 
 interface WorkflowDashboardProps {
   onEditWorkflow: (workflowId: string) => void
@@ -32,21 +34,47 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [newWorkflowName, setNewWorkflowName] = useState("")
+  const [workflows, setWorkflows] = useState([])
   const [newWorkflowDescription, setNewWorkflowDescription] = useState("")
   const [importJson, setImportJson] = useState("")
+  const { toast } = useToast();
 
-  const { workflows, createWorkflow, deleteWorkflow, duplicateWorkflow, exportWorkflow, importWorkflow } =
+
+  const {  createWorkflow, deleteWorkflow, duplicateWorkflow, exportWorkflow, importWorkflow, loadWorkflow } =
     useWorkflowsStore()
   const { user, signOut } = useAuthStore()
 
-  const handleCreateWorkflow = () => {
-    if (!newWorkflowName.trim()) return
+  const handleCreateWorkflow = async () => {
+    try {
+      if (!newWorkflowName.trim()) return
 
-    const id = createWorkflow(newWorkflowName.trim(), newWorkflowDescription.trim() || undefined)
-    setNewWorkflowName("")
-    setNewWorkflowDescription("")
-    setShowCreateDialog(false)
-    onEditWorkflow(id)
+      const id = createWorkflow(newWorkflowName.trim(), newWorkflowDescription.trim() || undefined)
+      setNewWorkflowName("")
+      setNewWorkflowDescription("")
+      setShowCreateDialog(false)
+      onEditWorkflow(id)
+      const workflowData = loadWorkflow(id)
+      const { name, nodes, edges, isActive, startNodeId, description } = workflowData
+      const data = await workFlowApi.saveWorflowDb(id, name, description, nodes, edges, startNodeId, isActive)
+      if (!data) {
+        toast({
+          title: 'Try Again!',
+          description: "Can't save workflow"
+        });
+      }
+      toast({
+        title: 'Saved!',
+        description: 'Workflow saved successfully'
+      });
+
+    } catch (error) {
+      console.log('error in creating workflow', error)
+      toast({
+        title: 'Error!',
+        description: "Can't create workflow! please try again"
+      });
+    }
+
   }
 
   const handleImportWorkflow = () => {
@@ -58,6 +86,28 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
       onEditWorkflow(id)
     } catch (error) {
       console.error("Failed to import workflow:", error)
+    }
+  }
+
+  const handleDeleteWorkFlow = async (workflowId: string) => {
+    try {
+      console.log(workflowId)
+      deleteWorkflow(workflowId)
+      const data = await workFlowApi.deleteWorkflow(workflowId)
+      if (!data) {
+        throw new Error("Can't delete the workspace")
+      }
+
+      toast({
+        title: 'Deleted!',
+        description: 'Workflow deleted successfully'
+      });
+    } catch (error) {
+      console.log('error in deleting workflow', error)
+      toast({
+        title: 'Error!',
+        description: "Can't delete workflow! please try again"
+      });
     }
   }
 
@@ -76,16 +126,51 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     }
   }
 
-  const handleDuplicateWorkflow = (workflowId: string) => {
-    const newId = duplicateWorkflow(workflowId)
-    if (newId) {
-      onEditWorkflow(newId)
+  const handleDuplicateWorkflow = async (workflowId: string) => {
+    try {
+
+
+      const newId = duplicateWorkflow(workflowId)
+
+      if (newId) {
+        const workflowData = loadWorkflow(workflowId)
+        const { name, nodes, edges, isActive, startNodeId, description } = workflowData
+        const data = await workFlowApi.saveWorflowDb(newId, name, description, nodes, edges, startNodeId, isActive)
+        if (!data) {
+          toast({
+            title: 'Try Again!',
+            description: "Can't create workflow"
+          });
+        }
+        toast({
+          title: 'Saved!',
+          description: 'Workflow saved successfully'
+        });
+        onEditWorkflow(newId)
+
+      }
+    } catch (error) {
+      console.log('error in creating workflow', error)
+      toast({
+        title: 'Error!',
+        description: "Can't create workflow! please try again"
+      });
     }
+
   }
+  const getWorkFlows= useCallback(async()=>{
+    const res=await workFlowApi.getWorkflows()
+    console.log("res",res)
+    // console.log("workflows",workflows)
+    setWorkflows(res)
+  },[]) 
+
+  useEffect(()=>{
+    getWorkFlows()
+  },[getWorkFlows])
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
@@ -181,7 +266,6 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {workflows.length === 0 ? (
           <div className="text-center py-12">
@@ -200,11 +284,11 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {workflows.map((workflow) => (
-              <Card key={workflow.id} className="hover:shadow-md transition-shadow">
+              <Card key={workflow.workflowId} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg truncate">{workflow.name}</CardTitle>
+                      <CardTitle className="text-lg truncate">{workflow.workflowName}</CardTitle>
                       {workflow.description && (
                         <CardDescription className="mt-1 line-clamp-2">{workflow.description}</CardDescription>
                       )}
@@ -216,19 +300,20 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
+                        <DropdownMenuItem onClick={() => onEditWorkflow(workflow.workflowId)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDuplicateWorkflow(workflow.id)}>
+                        {/* baad m add karenge */}
+                        {/* <DropdownMenuItem onClick={() => handleDuplicateWorkflow(workflow.workflowId)}>
                           <Copy className="w-4 h-4 mr-2" />
                           Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleExportWorkflow(workflow.id)}>
+                        </DropdownMenuItem> */}
+                        <DropdownMenuItem onClick={() => handleExportWorkflow(workflow.workflowId)}>
                           <FileDown className="w-4 h-4 mr-2" />
                           Export
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => deleteWorkflow(workflow.id)} className="text-destructive">
+                        <DropdownMenuItem onClick={() => handleDeleteWorkFlow(workflow.workflowId)} className="text-destructive">
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
                         </DropdownMenuItem>
@@ -249,7 +334,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                     <span className="text-xs text-gray-500">
                       Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
                     </span>
-                    <Button size="sm" onClick={() => onEditWorkflow(workflow.id)} className="ml-2">
+                    <Button size="sm" onClick={() => onEditWorkflow(workflow.workflowId)} className="ml-2">
                       <Play className="w-3 h-3 mr-1" />
                       Edit
                     </Button>

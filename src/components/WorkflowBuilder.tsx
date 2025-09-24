@@ -32,9 +32,7 @@ const WorkflowBuilder = () => {
     validate,
     setNode
   } = useWorkflowStore();
-    const [isOpen, setIsOpen] = useState(false);
-    console.log(isOpen);
-  
+    const [isOpen, setIsOpen] = useState(false);  
 
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(edges);

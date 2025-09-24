@@ -1,6 +1,6 @@
 import { RFEdge, RFNode } from "@/types"
 
-const API_BASE_URL = import.meta.env.VITE_API_URL 
+const API_BASE_URL = import.meta.env.VITE_API_URL
 
 export class ApiError extends Error {
   constructor(
@@ -16,7 +16,7 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
   const url = `${API_BASE_URL}${endpoint}`
 
   const config: RequestInit = {
-    credentials: "include", 
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
@@ -42,7 +42,7 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
   }
 }
 
-  export const authApi = {
+export const authApi = {
   signIn: (email: string, password: string) =>
     apiRequest("/sign-up", {
       method: "POST",
@@ -68,10 +68,34 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
     }),
 }
 
-export const workFlowApi={
-  saveWorflowDb: (id: string, workflowName: string, nodes: RFNode[] , edges:RFEdge[] , startNodeId:string, isActive:boolean) =>
+export const workFlowApi = {
+  saveWorflowDb: (id: string, workflowName: string, description: string, nodes: RFNode[], edges: RFEdge[], startNodeId: string, isActive: boolean) =>
     apiRequest("/workflows", {
       method: "POST",
-      body: JSON.stringify({ id, workflowName, nodes, edges , startNodeId, isActive }),
+      body: JSON.stringify({ id, workflowName, description, nodes, edges, startNodeId, isActive }),
     }),
+    
+    getWorkflows: () =>
+    apiRequest("/workflows", {
+      method: "GET",
+    }),
+
+  getWorflow: (id: string) => 
+     apiRequest(`/workflows/${id}`, {
+      method: "GET",
+    })
+  ,
+
+  updateWorkFlow: (id: string, reqObj) => 
+    apiRequest(`/workflows/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(reqObj)
+    })
+  ,
+  deleteWorkflow:(id:string)=>
+     apiRequest(`/workflows/${id}`,{
+      method:"DELETE"
+    })
+  
+
 }
