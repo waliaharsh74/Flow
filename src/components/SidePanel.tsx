@@ -235,10 +235,16 @@ const FormTriggerEditor = ({ node, updateParameter,workflowId }: any) => {
     //     </div>
     //   </div>
     // </div>
+     <div className="flex items-center space-x-2">
 
+    
     <Button onClick={()=>navigate(`/form/${workflowId}`)}>
       Edit form
     </Button>
+    <Button onClick={()=>navigate(`/form/live/${workflowId}`)} >
+          View Live
+         </Button>
+    </div>
   );
 };
 

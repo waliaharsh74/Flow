@@ -47,7 +47,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     deleteWorkflow,
     duplicateWorkflow,
     exportWorkflow,
-    importWorkflow, } =
+    importWorkflow,clearError } =
     useWorkflowsStore()
   const { user, signOut } = useAuthStore()
 
@@ -166,6 +166,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   )
 
   useEffect(() => {
+     if (!user) return
     loadWorkflows().then((result) => {
       if (!result.success) {
         toast({
@@ -178,6 +179,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   }, [loadWorkflows, toast])
 
   useEffect(() => {
+     if (!user) return
     if (error) {
       toast({
         title: "Error!",

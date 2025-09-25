@@ -1,7 +1,8 @@
 import { FileElement, FormElement, FormSchema, FormValues, RadioElement } from "@/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { workFlowApi } from "@/utils/api";
 import { useParams } from "react-router";
+import { Button } from "../components/ui/button";
 
 
 
@@ -18,11 +19,11 @@ const LiveForm: React.FC = () => {
     const isRadioElement = (element: FormElement): element is RadioElement => element.type === 'radio';
     const isFileElement = (element: FormElement): element is FileElement => element.type === 'file';
     const generateId = (): string => {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
-    return 'id-' + Math.random().toString(36).substr(2, 9);
-};
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return 'id-' + Math.random().toString(36).substr(2, 9);
+    };
     const SAMPLE_FORM: FormSchema = {
         title: "Contact Form",
         description: "Please fill out this form to get in touch with us.",
@@ -55,30 +56,30 @@ const LiveForm: React.FC = () => {
             },
         ],
     };
-        const [schema,setSchema]=useState<FormSchema>(SAMPLE_FORM)
+    const [schema, setSchema] = useState<FormSchema>()
+    const fetchData = useCallback(async () => {
+        const res = await workFlowApi.getForm(`${workflowId}`
 
-    
+        )
+        if (res?.isLive) setSchema(res?.data)
+        setIsLive(res?.isLive)
+        setLoading(false)
+        setMsg(res?.msg)
 
-    useEffect(()=>{
+    }, [schema,workflowId])
+
+
+    useEffect(() => {
         try {
-              const fetchData=async()=>{
-            const res=await workFlowApi.getForm(`${workflowId}`
-                
-            )
-            if(res?.isActive)setSchema(res?.data)
-                setIsLive(res?.isLive)
-                setLoading(false)
-                setMsg(res?.msg)
 
-        }
-        fetchData()
-            
+            fetchData()
+
         } catch (error) {
             setIsLive(false)
-                setLoading(false)
+            setLoading(false)
         }
-      
-    },[schema])
+
+    }, [])
 
     const setValue = (id: string, value: any) => {
         setValues(prev => ({ ...prev, [id]: value }));
@@ -126,14 +127,26 @@ const LiveForm: React.FC = () => {
 
         setValue(elementId, fileData);
     };
-    if(loading)return(
+    if (loading) return (
         <div>
-            Loading..
+            Loading...
         </div>
     )
-    if(!isLive)return(
+    if (!isLive) return (
         <div>
-            {msg ||"No form"}
+            <div className="text-center py-12">
+                <div className="max-w-md mx-auto">
+
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Oops!</h3>
+                    <p className="text-gray-600 mb-6">{msg || "No form"}</p>
+                    <Button onClick={() => window.location.href = '/'
+                    }>
+                        Back to Home
+                    </Button>
+
+                </div>
+            </div>
+
         </div>
     )
     return (

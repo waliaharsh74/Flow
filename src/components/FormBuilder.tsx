@@ -102,35 +102,10 @@ const FormBuilder: React.FC = () => {
 
     const [schema, setSchema] = useState<FormSchema>(SAMPLE_FORM);
 
-    useEffect(() => {
-        loadWorkflows().then((result) => {
-            if (!result.success) {
-                toast({
-                    title: "Error!",
-                    description: result.error || "Unable to load workflows",
-                    variant: "destructive",
-                })
-            }
-        })
-    }, [loadWorkflows, toast])
-
-    useEffect(() => {
-        if (error) {
-            toast({
-                title: "Error!",
-                description: error,
-                variant: "destructive",
-            })
-        }
-    }, [error, toast])
-    useEffect(() => {
-
-        const load = async () => {
+    const fetchData =useCallback( async () => {
 
             const workflowData = workflows.find((w) => w.id === workflowId)
-            // console.log(workflowData)
             const formData = (workflowData?.nodes?.find((n) => n.data.kind === 'trigger.form')?.data?.parameters) as FormSchema
-                        console.log(formData)
 
             if (formData) {
 
@@ -140,11 +115,38 @@ const FormBuilder: React.FC = () => {
                 setSchema(SAMPLE_FORM)
             }
             setLoading(false)
+        },[])
+
+     const fetchWorkflows=useCallback(()=>{loadWorkflows().then((result) => {
+            if (!result.success) {
+                toast({
+                    title: "Error!",
+                    description: result.error || "Unable to load workflows",
+                    variant: "destructive",
+                })
+            }
+        })},[workflows])   
+
+
+
+    useEffect(() => {
+
+        fetchWorkflows()
+    }, [])
+
+    useEffect(() => {
+        fetchData()
+    }, [])
+    
+    useEffect(() => {
+        if (error) {
+            toast({
+                title: "Error!",
+                description: error,
+                variant: "destructive",
+            })
         }
-        load()
-
-    }, [loading,schema,workflows])
-
+    }, [error, toast])
 
 
     const handleNewForm = useCallback(() => {
