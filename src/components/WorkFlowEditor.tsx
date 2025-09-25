@@ -66,7 +66,7 @@ export function WorkflowEditor({ workflowId, onBackToDashboard }: WorkflowEditor
         
 
         {selectedNodeId && (
-            <SidePanel />
+            <SidePanel  workflowId={workflowId}/>
           
         )}
       </div>

@@ -28,7 +28,6 @@ const Index = () => {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
   const { setCurrentWorkflow } = useWorkflowsStore()
 
-  // Check authentication on app load
   useEffect(() => {
     const initAuth = async () => {
       await checkAuth()
@@ -38,7 +37,6 @@ const Index = () => {
     initAuth()
   }, [checkAuth, isAuthenticated])
 
-  // Update app state based on authentication
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {

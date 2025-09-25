@@ -74,28 +74,35 @@ export const workFlowApi = {
       method: "POST",
       body: JSON.stringify({ id, workflowName, description, nodes, edges, startNodeId, isActive }),
     }),
-    
-    getWorkflows: () =>
+
+  getWorkflows: () =>
     apiRequest("/workflows", {
       method: "GET",
     }),
 
-  getWorflow: (id: string) => 
-     apiRequest(`/workflows/${id}`, {
+  getWorflow: (id: string) =>
+    apiRequest(`/workflows/${id}`, {
       method: "GET",
     })
   ,
 
-  updateWorkFlow: (id: string, reqObj) => 
+  updateWorkFlow: (id: string, reqObj) =>
     apiRequest(`/workflows/${id}`, {
       method: "PATCH",
       body: JSON.stringify(reqObj)
     })
   ,
-  deleteWorkflow:(id:string)=>
-     apiRequest(`/workflows/${id}`,{
-      method:"DELETE"
+  deleteWorkflow: (id: string) =>
+    apiRequest(`/workflows/${id}`, {
+      method: "DELETE"
+    }),
+
+  getForm: (id: string) =>
+    apiRequest(`/workflows/form/${id}`, {
+      method: "GET",
     })
-  
+  ,
+
+
 
 }

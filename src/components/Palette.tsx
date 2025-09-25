@@ -90,7 +90,7 @@ const Palette = () => {
         </div>
       </div>
 
-      <div className="border-t border-border pt-4">
+      {/* <div className="border-t border-border pt-4">
          <button
           onClick={() => setIsOpen(true)}
           className="w-full p-3 bg-workflow-trigger/10 hover:bg-workflow-trigger/20 rounded-lg border border-workflow-trigger/30 transition-colors text-left"
@@ -102,7 +102,7 @@ const Palette = () => {
             Switch to different trigger
           </div>
         </button> 
-      </div>
+      </div> */}
 
       
       {isOpen && (

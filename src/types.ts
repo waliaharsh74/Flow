@@ -9,7 +9,7 @@ export type NodeKind =
   | 'action.email'
   | 'action.llm';
 
-export type AppState = "loading" | "auth" | "dashboard" | "editor"
+export type AppState = "loading" | "auth" | "dashboard" | "editor" | "authenticated"
 
 export interface FormField {
   fieldLabel: string;
@@ -110,3 +110,44 @@ export interface PaletteItem {
   description: string;
   icon: React.ReactNode;
 }
+
+
+
+export type FormSchema = {
+    title: string;
+    description?: string;
+    elements: FormElement[];
+    name: "form"
+};
+
+export type BaseElement = {
+    id: string;
+    fieldName: string;
+    type: "text" | "password" | "textarea" | "number" | "date" | "radio" | "checkbox" | "file";
+    required?: boolean;
+    placeholder?: string;
+};
+
+export type RadioOption = { id: string; label: string; value: string };
+
+export type RadioElement = BaseElement & {
+    type: "radio";
+    options: RadioOption[];
+};
+
+export type CheckboxElement = BaseElement & {
+    type: "checkbox";
+};
+
+export type FileElement = BaseElement & {
+    type: "file";
+    multiple?: boolean;
+    accept?: string;
+};
+
+export type TextElement = BaseElement & { type: "text" | "password" | "textarea" | "number" };
+export type DateElement = BaseElement & { type: "date" };
+
+export type FormElement = RadioElement | CheckboxElement | FileElement | TextElement | DateElement;
+
+export type FormValues = Record<string, any>;

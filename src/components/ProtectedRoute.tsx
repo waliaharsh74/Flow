@@ -1,7 +1,11 @@
 "use client"
 
-import { useEffect, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
+import { useNavigate } from "react-router-dom"
+
 import { useAuthStore } from "../store/auth"
+import { AppState } from "@/types"
+import { Button } from "../components/ui/button"
 
 interface ProtectedRouteProps {
   children: ReactNode
@@ -9,15 +13,33 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
+  const navigate=useNavigate()
+
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
+      const [appState, setAppState] = useState<AppState>("loading")
+  
+    useEffect(() => {
+      const initAuth = async () => {
+        await checkAuth()
+        setAppState(isAuthenticated ? "authenticated" : "auth")
+      }
+  
+      initAuth()
+    }, [checkAuth, isAuthenticated])
+  
+    useEffect(() => {
+      if (!isLoading) {
+        if (isAuthenticated) {
+          if (appState === "auth") {
+            setAppState("authenticated")
+          }
+        } else {
+          setAppState("auth")
+        }
+      }
+    }, [isAuthenticated, isLoading, appState])
 
-  useEffect(() => {
-    if (!isAuthenticated && !isLoading) {
-      checkAuth()
-    }
-  }, [isAuthenticated, isLoading, checkAuth])
-
-  if (isLoading) {
+  if (appState === "loading" || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -28,17 +50,9 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
     )
   }
 
-  if (!isAuthenticated) {
-    return (
-      fallback || (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">Please sign in to access this page.</p>
-          </div>
-        </div>
-      )
-    )
+  if (appState === "auth") {
+    navigate('/')
+    
   }
 
   return <>{children}</>

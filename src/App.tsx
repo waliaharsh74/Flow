@@ -9,6 +9,8 @@ import TopBar from "./components/TopBar";
 import FormBuilder from "./components/FormBuilder";
 import { SessionProvider } from "./components/SessionProvider";
 import { Suspense } from "react";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import LiveForm from "./components/LiveForm";
 
 
 const App = () => (
@@ -20,7 +22,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/form" element={<FormBuilder />} />
+          <Route path="/form/:workflowId" element={<ProtectedRoute children={<FormBuilder />}/>} />
+          <Route path="/form/live/:workflowId" element={<LiveForm/>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

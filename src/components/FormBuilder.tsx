@@ -1,42 +1,14 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useWorkflowsStore } from '@/store/worflows';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useParams } from "react-router";
+import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'react-router-dom';
 
-type FormSchema = {
-    title: string;
-    description?: string;
-    elements: FormElement[];
-};
+import { Button } from './ui/button';
+import { Plus } from 'lucide-react';
+import { FileElement, FormElement, FormSchema, FormValues, RadioElement, RadioOption } from '@/types';
 
-type BaseElement = {
-    id: string;
-    fieldName: string;
-    type: "text" | "password" | "textarea" | "number" | "date" | "radio" | "checkbox" | "file";
-    required?: boolean;
-    placeholder?: string;
-};
 
-type RadioOption = { id: string; label: string; value: string };
-
-type RadioElement = BaseElement & {
-    type: "radio";
-    options: RadioOption[];
-};
-
-type CheckboxElement = BaseElement & {
-    type: "checkbox";
-};
-
-type FileElement = BaseElement & {
-    type: "file";
-    multiple?: boolean;
-    accept?: string;
-};
-
-type TextElement = BaseElement & { type: "text" | "password" | "textarea" | "number" };
-type DateElement = BaseElement & { type: "date" };
-
-type FormElement = RadioElement | CheckboxElement | FileElement | TextElement | DateElement;
-
-type FormValues = Record<string, any>;
 
 const generateId = (): string => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -80,6 +52,7 @@ const createDefaultElement = (type: FormElement['type']): FormElement => {
 const SAMPLE_FORM: FormSchema = {
     title: "Contact Form",
     description: "Please fill out this form to get in touch with us.",
+    name: "form",
     elements: [
         {
             id: generateId(),
@@ -110,18 +83,76 @@ const SAMPLE_FORM: FormSchema = {
 };
 
 const FormBuilder: React.FC = () => {
-    const [schema, setSchema] = useState<FormSchema>(SAMPLE_FORM);
     const [mode, setMode] = useState<'builder' | 'preview'>('builder');
     const [importText, setImportText] = useState('');
     const [showImportModal, setShowImportModal] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
+    const [loading,setLoading]=useState(true)
     const [importError, setImportError] = useState('');
+    const [searchParams] = useSearchParams();
+    const isLive= searchParams.get('live');
+
+
+    const { workflows, loadWorkflow, updateWorkflow, isLoading, error, loadWorkflows, } = useWorkflowsStore()
+    const { toast } = useToast()
+    const hasWorkflows = useMemo(() => workflows.length > 0, [workflows])
+
+
+    const { workflowId } = useParams();
+
+    const [schema, setSchema] = useState<FormSchema>(SAMPLE_FORM);
+
+    useEffect(() => {
+        loadWorkflows().then((result) => {
+            if (!result.success) {
+                toast({
+                    title: "Error!",
+                    description: result.error || "Unable to load workflows",
+                    variant: "destructive",
+                })
+            }
+        })
+    }, [loadWorkflows, toast])
+
+    useEffect(() => {
+        if (error) {
+            toast({
+                title: "Error!",
+                description: error,
+                variant: "destructive",
+            })
+        }
+    }, [error, toast])
+    useEffect(() => {
+
+        const load = async () => {
+
+            const workflowData = workflows.find((w) => w.id === workflowId)
+            // console.log(workflowData)
+            const formData = (workflowData?.nodes?.find((n) => n.data.kind === 'trigger.form')?.data?.parameters) as FormSchema
+                        console.log(formData)
+
+            if (formData) {
+
+                setSchema(formData)
+            }
+            else{
+                setSchema(SAMPLE_FORM)
+            }
+            setLoading(false)
+        }
+        load()
+
+    }, [loading,schema,workflows])
+
+
 
     const handleNewForm = useCallback(() => {
         setSchema({
             title: 'Untitled Form',
             description: '',
             elements: [],
+            name: "form"
         });
         setMode('builder');
     }, []);
@@ -150,111 +181,169 @@ const FormBuilder: React.FC = () => {
         }
     }, [importText]);
 
+    const handleSave = useCallback(async () => {
+        try {
+            const workflowData = loadWorkflow(workflowId);
+            if (!workflowData) {
+                toast({
+                    title: 'Error!',
+                    description: 'Workflow not found',
+                    variant: 'destructive'
+                });
+                return;
+            }
+            console.log(schema)
+
+            const updatednodes = workflowData.nodes.map((node, index) => {
+                if (node.data.kind === 'trigger.form') {
+                    node.data.parameters = schema
+                }
+                return node
+            })
+
+
+
+            const result = await updateWorkflow(workflowId, {
+
+                nodes: updatednodes,
+
+            });
+            if (result.success) {
+                toast({
+                    title: 'Success!',
+                    description: 'Form saved successfully'
+                });
+            } else {
+                toast({
+                    title: 'Error!',
+                    description: result.error || "Can't Save WorkFlow",
+                    variant: 'destructive'
+                });
+            }
+        } catch (error) {
+            console.log(error)
+            toast({
+                title: 'Error!',
+                description: "Can't Save WorkFlow "
+            });
+        }
+    }, [schema])
+
     const exportJson = JSON.stringify(schema, null, 2);
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="container mx-auto px-4 py-8 max-w-7xl">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-foreground mb-2">Form Builder</h1>
-                    <p className="text-muted-foreground">Create, edit, and preview dynamic forms with JSON import/export.</p>
+            {loading  ? (
+                <div className="text-center py-12 text-gray-600">Loading ...</div>
+            ) : !hasWorkflows ? (
+                <div className="text-center py-12">
+                    <div className="max-w-md mx-auto">
+                        
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No workflows yet</h3>
+
+                    </div>
                 </div>
+            ) : (
+                <div className="container mx-auto px-4 py-8 max-w-7xl">
+                    <div className="mb-8">
+                        <h1 className="text-3xl font-bold text-foreground mb-2">Form Builder</h1>
+                    </div>
 
-                <div className="mb-8 flex flex-wrap gap-3">
-                    <button
-                        onClick={handleNewForm}
-                        className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
-                    >
-                        New Form
-                    </button>
-                    <button
-                        onClick={() => setShowImportModal(true)}
-                        className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
-                    >
-                        Import Form
-                    </button>
-                    <button
-                        onClick={() => setShowExportModal(true)}
-                        className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
-                    >
-                        Export Form
-                    </button>
-                    <button
-                        onClick={() => setMode(mode === 'builder' ? 'preview' : 'builder')}
-                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
-                    >
-                        {mode === 'builder' ? 'Preview' : 'Edit'}
-                    </button>
-                </div>
+                    { (<div className="mb-8 flex flex-wrap gap-3">
+                        <button
+                            onClick={handleNewForm}
+                            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
+                        >
+                            New Form
+                        </button>
+                        <button
+                            onClick={() => setShowImportModal(true)}
+                            className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
+                        >
+                            Import Form
+                        </button>
+                        <button
+                            onClick={() => handleSave()}
+                            className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
+                        >
+                            Save Form
+                        </button>
+                        <button
+                            onClick={() => setMode(mode === 'builder' ? 'preview' : 'builder')}
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
+                        >
+                            {mode === 'builder' ? 'Preview' : 'Edit'}
+                        </button>
+                    </div>)}
 
-                {mode === 'builder' ? (
-                    <BuilderPanel schema={schema} setSchema={setSchema} />
-                ) : (
-                    <PreviewForm schema={schema} />
-                )}
+                    {mode === 'builder' ? (
+                        <BuilderPanel schema={schema} setSchema={setSchema} />
+                    ) : (
+                        <PreviewForm schema={schema} />
+                    )}
 
-                {showImportModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-card rounded-lg p-6 w-full max-w-2xl">
-                            <h3 className="text-lg font-semibold mb-4">Import Form Schema</h3>
-                            <textarea
-                                value={importText}
-                                onChange={(e) => setImportText(e.target.value)}
-                                placeholder="Paste your JSON schema here..."
-                                className="w-full h-40 p-3 border border-input rounded-md resize-none mb-4 bg-background"
-                            />
-                            {importError && (
-                                <div className="text-destructive text-sm mb-4">{importError}</div>
-                            )}
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={handleImport}
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
-                                >
-                                    Import
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setShowImportModal(false);
-                                        setImportText('');
-                                        setImportError('');
-                                    }}
-                                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
-                                >
-                                    Cancel
-                                </button>
+                    {showImportModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-card rounded-lg p-6 w-full max-w-2xl">
+                                <h3 className="text-lg font-semibold mb-4">Import Form Schema</h3>
+                                <textarea
+                                    value={importText}
+                                    onChange={(e) => setImportText(e.target.value)}
+                                    placeholder="Paste your JSON schema here..."
+                                    className="w-full h-40 p-3 border border-input rounded-md resize-none mb-4 bg-background"
+                                />
+                                {importError && (
+                                    <div className="text-destructive text-sm mb-4">{importError}</div>
+                                )}
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleImport}
+                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
+                                    >
+                                        Import
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowImportModal(false);
+                                            setImportText('');
+                                            setImportError('');
+                                        }}
+                                        className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {showExportModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                        <div className="bg-card rounded-lg p-6 w-full max-w-2xl">
-                            <h3 className="text-lg font-semibold mb-4">Export Form Schema</h3>
-                            <textarea
-                                value={exportJson}
-                                readOnly
-                                className="w-full h-40 p-3 border border-input rounded-md resize-none mb-4 bg-muted font-mono text-sm"
-                            />
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => navigator.clipboard.writeText(exportJson)}
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
-                                >
-                                    Copy to Clipboard
-                                </button>
-                                <button
-                                    onClick={() => setShowExportModal(false)}
-                                    className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
-                                >
-                                    Close
-                                </button>
+                    {showExportModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-card rounded-lg p-6 w-full max-w-2xl">
+                                <h3 className="text-lg font-semibold mb-4">Export Form Schema</h3>
+                                <textarea
+                                    value={exportJson}
+                                    readOnly
+                                    className="w-full h-40 p-3 border border-input rounded-md resize-none mb-4 bg-muted font-mono text-sm"
+                                />
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => navigator.clipboard.writeText(exportJson)}
+                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
+                                    >
+                                        Copy to Clipboard
+                                    </button>
+                                    <button
+                                        onClick={() => setShowExportModal(false)}
+                                        className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
+                                    >
+                                        Close
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>)}
         </div>
     );
 };
@@ -266,6 +355,8 @@ const BuilderPanel: React.FC<{
     const [selectedType, setSelectedType] = useState<FormElement['type']>('text');
 
     const updateSchema = (updates: Partial<FormSchema>) => {
+                    console.log(schema)
+
         setSchema(prev => ({ ...prev, ...updates }));
     };
 
@@ -419,17 +510,16 @@ const BuilderPanel: React.FC<{
                 </div>
             </div>
 
-            {/* Element List */}
             <div className="lg:col-span-2">
                 <div className="bg-card rounded-lg p-6 border border-border">
-                    <h3 className="text-lg font-semibold mb-4">Form Elements ({schema.elements.length})</h3>
-                    {schema.elements.length === 0 ? (
+                    <h3 className="text-lg font-semibold mb-4">Form Elements ({schema?.elements.length})</h3>
+                    {schema?.elements.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
                             <p>No elements added yet. Add your first element to get started.</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {schema.elements.map((element, index) => (
+                            {schema?.elements.map((element, index) => (
                                 <ElementEditor
                                     key={element.id}
                                     element={element}

@@ -40,7 +40,7 @@ const createDefaultParameters = (kind: NodeKind): any => {
       return {
         formTitle: 'New Form',
         formDescription: '',
-        formFields: { values: [] },
+        elements: [],
         options: {}
       };
     case 'trigger.cron':

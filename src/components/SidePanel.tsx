@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Trash } from 'lucide-react';
+import { Trash, Workflow } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -19,8 +19,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useNavigate } from 'react-router-dom';
+interface sidePanelProps {
+  workflowId: string
+}
 
-const SidePanel = () => {
+const SidePanel = ({workflowId}:sidePanelProps) => {
   const { nodes, selectedNodeId, updateNode, deleteNode, resetWorkflow,getWorkflowState, changeTriggerType, startNodeId } = useWorkflowStore();
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
@@ -60,7 +64,7 @@ const SidePanel = () => {
         );
 
       case 'trigger.form':
-        return <FormTriggerEditor node={selectedNode} updateParameter={updateParameter} />;
+        return <FormTriggerEditor node={selectedNode} updateParameter={updateParameter} workflowId={workflowId}/>;
 
       case 'trigger.cron':
         return <CronTriggerEditor node={selectedNode} updateParameter={updateParameter} />;
@@ -148,8 +152,10 @@ const SidePanel = () => {
   );
 };
 
-const FormTriggerEditor = ({ node, updateParameter }: any) => {
+const FormTriggerEditor = ({ node, updateParameter,workflowId }: any) => {
   const [newField, setNewField] = useState<FormField>({ fieldLabel: '', requiredField: false });
+    const navigate=useNavigate()
+
 
   const addField = () => {
     if (!newField.fieldLabel) return;
@@ -169,66 +175,70 @@ const FormTriggerEditor = ({ node, updateParameter }: any) => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label>Form Title</Label>
-        <Input
-          value={node.data.parameters.formTitle || ''}
-          onChange={(e) => updateParameter('formTitle', e.target.value)}
-          placeholder="Enter form title"
-        />
-      </div>
+    // <div className="space-y-4">
+    //   <div className="space-y-2">
+    //     <Label>Form Title</Label>
+    //     <Input
+    //       value={node.data.parameters.formTitle || ''}
+    //       onChange={(e) => updateParameter('formTitle', e.target.value)}
+    //       placeholder="Enter form title"
+    //     />
+    //   </div>
 
-      <div className="space-y-2">
-        <Label>Form Description</Label>
-        <Textarea
-          value={node.data.parameters.formDescription || ''}
-          onChange={(e) => updateParameter('formDescription', e.target.value)}
-          placeholder="Enter form description"
-          rows={3}
-        />
-      </div>
+    //   <div className="space-y-2">
+    //     <Label>Form Description</Label>
+    //     <Textarea
+    //       value={node.data.parameters.formDescription || ''}
+    //       onChange={(e) => updateParameter('formDescription', e.target.value)}
+    //       placeholder="Enter form description"
+    //       rows={3}
+    //     />
+    //   </div>
 
-      <div className="space-y-2">
-        <Label>Form Fields</Label>
-        <div className="space-y-2">
-          {(node.data.parameters.formFields?.values || []).map((field: FormField, index: number) => (
-            <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
-              <span className="flex-1 text-sm">{field.fieldLabel}</span>
-              {field.requiredField && (
-                <span className="text-xs text-destructive">Required</span>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeField(index)}
-              >
-                ×
-              </Button>
-            </div>
-          ))}
-        </div>
+    //   <div className="space-y-2">
+    //     <Label>Form Fields</Label>
+    //     <div className="space-y-2">
+    //       {(node.data.parameters.formFields?.values || []).map((field: FormField, index: number) => (
+    //         <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded">
+    //           <span className="flex-1 text-sm">{field.fieldLabel}</span>
+    //           {field.requiredField && (
+    //             <span className="text-xs text-destructive">Required</span>
+    //           )}
+    //           <Button
+    //             variant="ghost"
+    //             size="sm"
+    //             onClick={() => removeField(index)}
+    //           >
+    //             ×
+    //           </Button>
+    //         </div>
+    //       ))}
+    //     </div>
 
-        <div className="space-y-2 p-3 bg-muted rounded">
-          <Input
-            placeholder="Field label"
-            value={newField.fieldLabel}
-            onChange={(e) => setNewField({ ...newField, fieldLabel: e.target.value })}
-          />
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="required"
-              checked={newField.requiredField}
-              onCheckedChange={(checked) => setNewField({ ...newField, requiredField: !!checked })}
-            />
-            <Label htmlFor="required">Required field</Label>
-          </div>
-          <Button onClick={addField} disabled={!newField.fieldLabel}>
-            Add Field
-          </Button>
-        </div>
-      </div>
-    </div>
+    //     <div className="space-y-2 p-3 bg-muted rounded">
+    //       <Input
+    //         placeholder="Field label"
+    //         value={newField.fieldLabel}
+    //         onChange={(e) => setNewField({ ...newField, fieldLabel: e.target.value })}
+    //       />
+    //       <div className="flex items-center space-x-2">
+    //         <Checkbox
+    //           id="required"
+    //           checked={newField.requiredField}
+    //           onCheckedChange={(checked) => setNewField({ ...newField, requiredField: !!checked })}
+    //         />
+    //         <Label htmlFor="required">Required field</Label>
+    //       </div>
+    //       <Button onClick={addField} disabled={!newField.fieldLabel}>
+    //         Add Field
+    //       </Button>
+    //     </div>
+    //   </div>
+    // </div>
+
+    <Button onClick={()=>navigate(`/form/${workflowId}`)}>
+      Edit form
+    </Button>
   );
 };
 
