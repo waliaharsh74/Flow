@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { RFNode, RFEdge, NodeKind, WorkflowState, ValidationResult, ExportSchema } from '../types';
-
+import { RFNode, RFEdge, NodeKind, WorkflowState, ValidationResult, ExportSchema, RFNodeData } from '../types';
 import { validateWorkflow } from '../utils/guards';
 import { convertToExport, convertFromExport } from '../utils/convert';
 import { v4 as uuidv4 } from 'uuid';
+import {getIncomers } from "reactflow"
 
 
 
@@ -26,7 +26,8 @@ interface WorkflowStore extends WorkflowState {
   resetWorkflow: () => void;
   changeTriggerType: (newKind: Extract<NodeKind, 'trigger.manual' | 'trigger.form' | 'trigger.cron'>) => void;
   setNode: (newNode:RFNode) => void,
-  getWorkflowState:()=>WorkflowState
+  getWorkflowState:()=>WorkflowState,
+  getIncomingState:(nodeId:string)=>RFNode<RFNodeData, string>[]
     
   
 
@@ -323,6 +324,16 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
           : node
       )
     }));
+  },
+  getIncomingState: (nodeId) => {
+    const { startNodeId, nodes,edges } = get();
+
+    const triggerNode = nodes.find(n => n.id === nodeId);
+    if (!triggerNode) return;
+    const incomers=getIncomers(triggerNode,nodes,edges)
+    return incomers
+
+    
   }
   
 }));

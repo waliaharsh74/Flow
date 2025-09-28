@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { Trash, Workflow } from 'lucide-react';
+import { CloudCog, Trash, Workflow } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -25,7 +25,8 @@ interface sidePanelProps {
 }
 
 const SidePanel = ({workflowId}:sidePanelProps) => {
-  const { nodes, selectedNodeId, updateNode, deleteNode, resetWorkflow,getWorkflowState, changeTriggerType, startNodeId } = useWorkflowStore();
+  const { nodes, edges,selectedNodeId, updateNode, deleteNode, resetWorkflow,getWorkflowState, changeTriggerType, startNodeId,getIncomingState } = useWorkflowStore();
+    const navigate=useNavigate()
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
 
@@ -50,7 +51,7 @@ const SidePanel = ({workflowId}:sidePanelProps) => {
       deleteNode(selectedNode.id);
 
     }
-  };
+  }; 
 
   const renderTriggerEditor = () => {
     switch (selectedNode.data.kind) {
@@ -128,6 +129,18 @@ const SidePanel = ({workflowId}:sidePanelProps) => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            {selectedNode.data.kind.startsWith('action.') && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => navigate(`/workflows/${workflowId}/edit/action/${selectedNode.id}`)}
+                className="gap-2"
+              >
+                <Workflow className="h-4 w-4" />
+                Action editor
+              </Button>
+            )}
+          
           </div>
         </div>
 

@@ -25,6 +25,8 @@ import { formatDistanceToNow } from "date-fns"
 import { Plus, MoreVertical, Play, Copy, Trash2, Edit, FileDown, FileUp, LogOut } from "lucide-react"
 import { workFlowApi } from "@/utils/api"
 import { useToast } from "@/hooks/use-toast"
+import { Toggle } from "@radix-ui/react-toggle"
+import { Switch } from "./ui/switch"
 
 interface WorkflowDashboardProps {
   onEditWorkflow: (workflowId: string) => void
@@ -47,7 +49,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     deleteWorkflow,
     duplicateWorkflow,
     exportWorkflow,
-    importWorkflow,clearError } =
+    importWorkflow,clearError,updateWorkflow } =
     useWorkflowsStore()
   const { user, signOut } = useAuthStore()
 
@@ -164,6 +166,27 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     },
     [duplicateWorkflow, onEditWorkflow, toast],
   )
+  const handleToogleSwitch=useCallback(async(workflowId,isActive)=>{
+    try {
+      const result = await updateWorkflow(workflowId, {
+       
+        isActive: !isActive,
+      }); 
+      if (result.success) {
+        toast({
+          title: 'Saved!',
+          description: 'Workflow active status changed successfully'
+        });
+      } 
+    } catch (error) {
+       toast({
+          title: 'Error!',
+          description:"Can't change the active status",
+          variant: 'destructive'
+        });
+    }
+       
+  },[])
 
   useEffect(() => {
      if (!user) return
@@ -348,9 +371,14 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                     <span>
                       {workflow.nodes.length} node{workflow.nodes.length !== 1 ? "s" : ""}
                     </span>
-                    <Badge variant={workflow.isActive ? "default" : "secondary"}>
-                      {workflow.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                        <div className="flex items-center space-x-2">
+
+                      
+
+                    <Label htmlFor="active-mode">{workflow.isActive ? "Active" : "Inactive"}</Label>
+                    <Switch id="active-mode" checked={workflow.isActive}   onClick={()=>handleToogleSwitch(workflow.id,workflow.isActive )} >
+                    </Switch>
+                        </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">

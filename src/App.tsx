@@ -11,23 +11,25 @@ import { SessionProvider } from "./components/SessionProvider";
 import { Suspense } from "react";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import LiveForm from "./components/LiveForm";
+import { ActionEditor } from "./components/ActionEditor";
 
 
 const App = () => (
-   <SessionProvider>
+  <SessionProvider>
     <Suspense fallback={<div>Loading...</div>}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/form/:workflowId" element={<ProtectedRoute children={<FormBuilder />}/>} />
-          <Route path="/form/live/:workflowId" element={<LiveForm/>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/form/:workflowId" element={<ProtectedRoute children={<FormBuilder />} />} />
+            <Route path="/form/live/:workflowId" element={<LiveForm />} />
+            <Route path="/workflows/:workflowId/edit/action/:nodeId" element={<ActionEditor />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </Suspense>
   </SessionProvider>
 );
