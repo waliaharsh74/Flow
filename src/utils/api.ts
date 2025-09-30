@@ -1,4 +1,4 @@
-import { RFEdge, RFNode } from "@/types"
+import { NodeKind, RFEdge, RFNode } from "@/types"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
 
@@ -102,7 +102,36 @@ export const workFlowApi = {
       method: "GET",
     })
   ,
+  ActionContextResponse: (workflowId: string, nodeId: string) =>
+    apiRequest(`/workflows/${workflowId}/action-context/${nodeId}`, {
+      method: "GET",
+    })
+  ,
 
 
 
 }
+
+export const credentialApi = {
+  createCredentials: (kind: Partial<NodeKind>, name: string, secrets: object) =>
+    apiRequest('/credentials', {
+      method: "POST",
+      body: JSON.stringify({ kind, name, secrets })
+    }),
+  getCredentials: (kind?: NodeKind) =>
+    apiRequest(`/credentials${kind ? `?kind=${encodeURIComponent(kind)}` : ""}`, {
+      method: "GET",
+    }),
+  getCredentialById: (id: string, kind?: NodeKind) =>
+    apiRequest(`/credentials/${encodeURIComponent(id)}${kind ? `?kind=${encodeURIComponent(kind)}` : ""}`, {
+      method: "GET",
+    }),
+  updateCredential: (id: string, body: Partial<Credential>) =>
+    apiRequest(`/credentials/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    }),
+
+}
+

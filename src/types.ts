@@ -26,11 +26,20 @@ export interface IfCondition {
     name: string;
   };
 }
+export interface Credential {
+  _id: string;
+  user: string; 
+  name: string;
+  kind: NodeKind;
+  data: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface RFNodeData {
   kind: NodeKind;
   parameters: any;
-  credentials?: Record<string, { id: string; name: string }>;
+  credentials?: string | Credential;
   webhookId?: string;
   toolBar?:any
 }
@@ -71,7 +80,7 @@ export interface ExportNode {
   typeVersion: number;
   position: [number, number];
   parameters: any;
-  credentials?: Record<string, { id: string; name: string }>;
+  credentials?:  string | Credential;
   webhookId?: string;
 }
 

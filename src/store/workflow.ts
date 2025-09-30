@@ -179,16 +179,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       data: {
         kind,
         parameters,
-        ...(kind.startsWith('action.') && {
-          credentials: {
-            [kind === 'action.telegram' ? 'telegramApi' : 
-              kind === 'action.email' ? 'resendApi' :
-              kind === 'action.llm' ? `${parameters.provider}Api` : 'api']: {
-              id: uuidv4(),
-              name: `Default ${kind.split('.')[1]} credentials`
-            }
-          }
-        }),
+      
       }
     };
 

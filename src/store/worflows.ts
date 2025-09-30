@@ -326,7 +326,11 @@ export const useWorkflowsStore = create<WorkflowsState & WorkflowsActions>((set,
           typeVersion: 2.2,
           position: [node.position.x, node.position.y],
           parameters: node.data.parameters,
-          ...(node.data.credentials && { credentials: node.data.credentials }),
+          credentials: node.data.credentials
+            ? typeof node.data.credentials === "string"
+              ? node.data.credentials
+              : node.data.credentials._id
+            : undefined,
           ...(node.data.webhookId && { webhookId: node.data.webhookId }),
         })),
         connections: buildConnections(workflow.nodes, workflow.edges),
@@ -353,7 +357,7 @@ export const useWorkflowsStore = create<WorkflowsState & WorkflowsActions>((set,
     return exportSchema
   },
 
-    importWorkflow: async (name, schema) => {
+  importWorkflow: async (name, schema) => {
     const id = generateId()
     const now = new Date().toISOString()
 
@@ -439,10 +443,10 @@ export const useWorkflowsStore = create<WorkflowsState & WorkflowsActions>((set,
     set({ error: null })
   },
 
-    syncWithServer: async () => {
-      return get().loadWorkflows()
-    },
-  }))
+  syncWithServer: async () => {
+    return get().loadWorkflows()
+  },
+}))
 
 function getNodeTypeMapping(kind: string): string {
   const mapping: Record<string, string> = {
@@ -502,10 +506,10 @@ function buildConnections(nodes: RFNode[], edges: RFEdge[]): ExportConnections {
             const targetNode = nodes.find((n) => n.id === edge.target)
             return targetNode
               ? {
-                  node: targetNode.data.parameters?.name ?? targetNode.id,
-                  type: "main" as const,
-                  index: 0,
-                }
+                node: targetNode.data.parameters?.name ?? targetNode.id,
+                type: "main" as const,
+                index: 0,
+              }
               : null
           })
           .filter((connection): connection is ExportConnection => connection !== null)

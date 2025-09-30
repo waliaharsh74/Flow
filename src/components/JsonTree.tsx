@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { DraggableToken } from "@/components/DraggableToken"
 
 interface JsonTreeProps {
+  id:string
   data: any
   path?: string
   level?: number
 }
 
-export function JsonTree({ data, path = "", level = 0 }: JsonTreeProps) {
+export function JsonTree({ data, path = "", level = 0 ,id}: JsonTreeProps) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const toggleCollapse = (key: string) => {
@@ -20,9 +21,9 @@ export function JsonTree({ data, path = "", level = 0 }: JsonTreeProps) {
     }))
   }
 
-  const renderValue = (value: any, key: string, currentPath: string) => {
-    const fullPath = currentPath ? `${currentPath}.${key}` : key
-
+  const renderValue = (value: any, key: string, currentPath: string,id) => {
+  const basePath = currentPath ? `${currentPath}.${key}` : key;
+  const fullPath = id ? `${id}.${basePath}` : basePath;
     if (value === null) {
       return <DraggableToken value="null" path={fullPath} className="text-muted-foreground" />
     }
@@ -54,7 +55,7 @@ export function JsonTree({ data, path = "", level = 0 }: JsonTreeProps) {
               {value.map((item, index) => (
                 <div key={index} className="flex items-start gap-2">
                   <span className="text-xs text-muted-foreground min-w-[20px]">{index}:</span>
-                  {renderValue(item, index.toString(), fullPath)}
+                  {renderValue(item, index.toString(), basePath,id)}
                 </div>
               ))}
             </div>
@@ -84,7 +85,7 @@ export function JsonTree({ data, path = "", level = 0 }: JsonTreeProps) {
               {keys.map((objKey) => (
                 <div key={objKey} className="flex items-start gap-2">
                   <span className="text-xs text-muted-foreground min-w-[60px]">{objKey}:</span>
-                  {renderValue(value[objKey], objKey, fullPath)}
+                  {renderValue(value[objKey], objKey, basePath,id)}
                 </div>
               ))}
             </div>
@@ -102,10 +103,10 @@ export function JsonTree({ data, path = "", level = 0 }: JsonTreeProps) {
         ? Object.entries(data).map(([key, value]) => (
             <div key={key} className="flex items-start gap-2 mb-1">
               <span className="text-muted-foreground min-w-[60px]">{key}:</span>
-              {renderValue(value, key, path)}
+              {renderValue(value, key, path,id)}
             </div>
           ))
-        : renderValue(data, "", path)}
+        : renderValue(data, "", path,id)}
     </div>
   )
 }

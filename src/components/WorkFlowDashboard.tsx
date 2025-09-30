@@ -23,10 +23,10 @@ import { useWorkflowsStore } from "../store/worflows"
 import { useAuthStore } from "../store/auth"
 import { formatDistanceToNow } from "date-fns"
 import { Plus, MoreVertical, Play, Copy, Trash2, Edit, FileDown, FileUp, LogOut } from "lucide-react"
-import { workFlowApi } from "@/utils/api"
 import { useToast } from "@/hooks/use-toast"
 import { Toggle } from "@radix-ui/react-toggle"
 import { Switch } from "./ui/switch"
+import CredentialsPane from "./CredentialsPane"
 
 interface WorkflowDashboardProps {
   onEditWorkflow: (workflowId: string) => void
@@ -38,10 +38,12 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   const [newWorkflowName, setNewWorkflowName] = useState("")
   const [newWorkflowDescription, setNewWorkflowDescription] = useState("")
   const [importJson, setImportJson] = useState("")
+  const [section, setSection] = useState<"workflows" | "credentials" | "executions">("workflows");
+
   const { toast } = useToast();
 
 
-  const {   workflows,
+  const { workflows,
     isLoading,
     error,
     loadWorkflows,
@@ -49,13 +51,13 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     deleteWorkflow,
     duplicateWorkflow,
     exportWorkflow,
-    importWorkflow,clearError,updateWorkflow } =
+    importWorkflow, clearError, updateWorkflow } =
     useWorkflowsStore()
   const { user, signOut } = useAuthStore()
 
-  
 
- 
+
+
   const hasWorkflows = useMemo(() => workflows.length > 0, [workflows])
 
   const handleCreateWorkflow = useCallback(async () => {
@@ -166,30 +168,33 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     },
     [duplicateWorkflow, onEditWorkflow, toast],
   )
-  const handleToogleSwitch=useCallback(async(workflowId,isActive)=>{
+  const handleToogleSwitch = useCallback(async (workflowId, isActive) => {
     try {
       const result = await updateWorkflow(workflowId, {
-       
+
         isActive: !isActive,
-      }); 
+      });
       if (result.success) {
         toast({
           title: 'Saved!',
           description: 'Workflow active status changed successfully'
         });
-      } 
+      }
     } catch (error) {
-       toast({
-          title: 'Error!',
-          description:"Can't change the active status",
-          variant: 'destructive'
-        });
+      toast({
+        title: 'Error!',
+        description: "Can't change the active status",
+        variant: 'destructive'
+      });
     }
-       
-  },[])
+
+  }, [])
+
+
+  
 
   useEffect(() => {
-     if (!user) return
+    if (!user) return
     loadWorkflows().then((result) => {
       if (!result.success) {
         toast({
@@ -202,7 +207,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   }, [loadWorkflows, toast])
 
   useEffect(() => {
-     if (!user) return
+    if (!user) return
     if (error) {
       toast({
         title: "Error!",
@@ -220,6 +225,20 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Workflow Builder</h1>
               <p className="text-sm text-gray-600">Welcome back, {user?.email}</p>
+            </div>
+            <div className="mt-2 inline-flex rounded-xl border bg-white overflow-hidden">
+              {(["workflows", "credentials", "executions"] as const).map(s => (
+                <button
+                  key={s}
+                  onClick={() => setSection(s)}
+                  className={[
+                    "px-4 py-2 text-sm font-medium transition",
+                    section === s ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-100"
+                  ].join(" ")}
+                >
+                  {s[0].toUpperCase() + s.slice(1)}
+                </button>
+              ))}
             </div>
             <div className="flex items-center gap-4">
               <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
@@ -309,8 +328,9 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {isLoading ? (
+      {section === "workflows" && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isLoading ? (
           <div className="text-center py-12 text-gray-600">Loading workflows...</div>
         ) : !hasWorkflows ? (
           <div className="text-center py-12">
@@ -371,14 +391,14 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                     <span>
                       {workflow.nodes.length} node{workflow.nodes.length !== 1 ? "s" : ""}
                     </span>
-                        <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2">
 
-                      
 
-                    <Label htmlFor="active-mode">{workflow.isActive ? "Active" : "Inactive"}</Label>
-                    <Switch id="active-mode" checked={workflow.isActive}   onClick={()=>handleToogleSwitch(workflow.id,workflow.isActive )} >
-                    </Switch>
-                        </div>
+
+                      <Label htmlFor="active-mode">{workflow.isActive ? "Active" : "Inactive"}</Label>
+                      <Switch id="active-mode" checked={workflow.isActive} onClick={() => handleToogleSwitch(workflow.id, workflow.isActive)} >
+                      </Switch>
+                    </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-gray-500">
@@ -394,7 +414,13 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
             ))}
           </div>
         )}
-      </div>
+      </div> )}
+      {section === "credentials" && <CredentialsPane />}
+      {section === "executions" && (
+    <div className="text-center py-12 text-gray-600">
+      No executions yet.
+    </div>
+  )}
     </div>
   )
 }

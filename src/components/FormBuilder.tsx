@@ -1,11 +1,11 @@
 import { useWorkflowsStore } from '@/store/worflows';
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'react-router-dom';
 
 import { Button } from './ui/button';
-import { Plus } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { FileElement, FormElement, FormSchema, FormValues, RadioElement, RadioOption } from '@/types';
 
 
@@ -87,10 +87,12 @@ const FormBuilder: React.FC = () => {
     const [importText, setImportText] = useState('');
     const [showImportModal, setShowImportModal] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
-    const [loading,setLoading]=useState(true)
+    const [loading, setLoading] = useState(true)
     const [importError, setImportError] = useState('');
     const [searchParams] = useSearchParams();
-    const isLive= searchParams.get('live');
+    const isLive = searchParams.get('live');
+    const navigate = useNavigate()
+
 
 
     const { workflows, loadWorkflow, updateWorkflow, isLoading, error, loadWorkflows, } = useWorkflowsStore()
@@ -102,22 +104,23 @@ const FormBuilder: React.FC = () => {
 
     const [schema, setSchema] = useState<FormSchema>(SAMPLE_FORM);
 
-    const fetchData =useCallback( async () => {
+    const fetchData = useCallback(async () => {
 
-            const workflowData = workflows.find((w) => w.id === workflowId)
-            const formData = (workflowData?.nodes?.find((n) => n.data.kind === 'trigger.form')?.data?.parameters) as FormSchema
+        const workflowData = workflows.find((w) => w.id === workflowId)
+        const formData = (workflowData?.nodes?.find((n) => n.data.kind === 'trigger.form')?.data?.parameters) as FormSchema
 
-            if (formData) {
+        if (formData) {
 
-                setSchema(formData)
-            }
-            else{
-                setSchema(SAMPLE_FORM)
-            }
-            setLoading(false)
-        },[])
+            setSchema(formData)
+        }
+        else {
+            setSchema(SAMPLE_FORM)
+        }
+        setLoading(false)
+    }, [])
 
-     const fetchWorkflows=useCallback(()=>{loadWorkflows().then((result) => {
+    const fetchWorkflows = useCallback(() => {
+        loadWorkflows().then((result) => {
             if (!result.success) {
                 toast({
                     title: "Error!",
@@ -125,7 +128,8 @@ const FormBuilder: React.FC = () => {
                     variant: "destructive",
                 })
             }
-        })},[workflows])   
+        })
+    }, [workflows])
 
 
 
@@ -137,7 +141,7 @@ const FormBuilder: React.FC = () => {
     useEffect(() => {
         fetchData()
     }, [])
-    
+
     useEffect(() => {
         if (error) {
             toast({
@@ -235,48 +239,56 @@ const FormBuilder: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-background">
-            {loading  ? (
+            {loading ? (
                 <div className="text-center py-12 text-gray-600">Loading ...</div>
             ) : !hasWorkflows ? (
                 <div className="text-center py-12">
                     <div className="max-w-md mx-auto">
-                        
+
                         <h3 className="text-lg font-medium text-gray-900 mb-2">No workflows yet</h3>
 
                     </div>
                 </div>
             ) : (
                 <div className="container mx-auto px-4 py-8 max-w-7xl">
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-foreground mb-2">Form Builder</h1>
+                    <div className='flex justify-between items-center '>
+                            <Button className='mb-8' variant="ghost" size="sm" onClick={() => navigate('/')}>
+                                <ArrowLeft className="w-4 h-4 mr-2" />
+                                Back to Dashboard
+                            </Button>
+                       
+
+                       
+
+                        {(<div className="mb-8 flex flex-wrap gap-3">
+                            <button
+                                onClick={handleNewForm}
+                                className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
+                            >
+                                New Form
+                            </button>
+                            <button
+                                onClick={() => setShowImportModal(true)}
+                                className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
+                            >
+                                Import Form
+                            </button>
+                            <button
+                                onClick={() => handleSave()}
+                                className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
+                            >
+                                Save Form
+                            </button>
+                            <button
+                                onClick={() => setMode(mode === 'builder' ? 'preview' : 'builder')}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
+                            >
+                                {mode === 'builder' ? 'Preview' : 'Edit'}
+                            </button>
+                        </div>)}
                     </div>
 
-                    { (<div className="mb-8 flex flex-wrap gap-3">
-                        <button
-                            onClick={handleNewForm}
-                            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary-hover transition-colors"
-                        >
-                            New Form
-                        </button>
-                        <button
-                            onClick={() => setShowImportModal(true)}
-                            className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
-                        >
-                            Import Form
-                        </button>
-                        <button
-                            onClick={() => handleSave()}
-                            className="px-4 py-2 bg-accent text-accent-foreground rounded-lg hover:bg-accent/80 transition-colors"
-                        >
-                            Save Form
-                        </button>
-                        <button
-                            onClick={() => setMode(mode === 'builder' ? 'preview' : 'builder')}
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors"
-                        >
-                            {mode === 'builder' ? 'Preview' : 'Edit'}
-                        </button>
-                    </div>)}
+
 
                     {mode === 'builder' ? (
                         <BuilderPanel schema={schema} setSchema={setSchema} />
@@ -357,7 +369,7 @@ const BuilderPanel: React.FC<{
     const [selectedType, setSelectedType] = useState<FormElement['type']>('text');
 
     const updateSchema = (updates: Partial<FormSchema>) => {
-                    console.log(schema)
+        console.log(schema)
 
         setSchema(prev => ({ ...prev, ...updates }));
     };
