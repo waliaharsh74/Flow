@@ -43,7 +43,7 @@ export function JsonTree({ data, path = "", level = 0 ,id}: JsonTreeProps) {
     if (Array.isArray(value)) {
       const isCollapsed = collapsed[fullPath]
       return (
-        <div>
+        <div className="">
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" className="h-4 w-4 p-0" onClick={() => toggleCollapse(fullPath)}>
               {isCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}

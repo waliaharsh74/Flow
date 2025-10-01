@@ -40,8 +40,8 @@ export function DraggableToken({ value, path, className }: DraggableTokenProps) 
   }
 
   return (
-    <div className="inline-flex items-center gap-1 group">
-      <span
+    <div className="inline-flex items-center gap-1 group ">
+      <span 
         draggable
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}

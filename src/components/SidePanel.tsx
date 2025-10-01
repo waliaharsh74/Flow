@@ -288,24 +288,7 @@ const CronTriggerEditor = ({ node, updateParameter }: any) => (
 
 const TelegramActionEditor = ({ node, updateParameter }: any) => (
   <div className="space-y-4">
-    <div className="space-y-2">
-      <Label>Chat ID</Label>
-      <Input
-        value={node.data.parameters.chatId || ''}
-        onChange={(e) => updateParameter('chatId', e.target.value)}
-        placeholder="Enter chat ID"
-      />
-    </div>
-
-    <div className="space-y-2">
-      <Label>Message</Label>
-      <Textarea
-        value={node.data.parameters.message || ''}
-        onChange={(e) => updateParameter('message', e.target.value)}
-        placeholder="Enter message to send"
-        rows={4}
-      />
-    </div>
+    
   </div>
 );
 

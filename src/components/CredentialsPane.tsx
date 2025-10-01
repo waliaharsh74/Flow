@@ -8,6 +8,8 @@ import { credentialApi, workFlowApi } from "@/utils/api"
 import { useToast } from "@/hooks/use-toast"
 import { Credential, NodeKind } from '../types'
 import ModifyCredentialDialog from "./ModifyCredentialDialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { MoreVertical, Trash2 } from "lucide-react"
 
 
 
@@ -18,6 +20,18 @@ export default function CredentialsPane() {
     const [editId, setEditId] = useState<string | null>(null);
     const [editKind, setEditKind] = useState<NodeKind | undefined>(undefined);
     const { toast } = useToast();
+
+    const handleDelete = useCallback(async (id) => {    
+            try {
+                await credentialApi.deleteCredential(id);
+                const filteredAr=creds.filter((f)=>f._id!==id)
+                setCreds(filteredAr)
+                toast({ title: "Deleted", description: "Credential deleted successfully" });
+            } catch (e: any) {
+                toast({ title: "Error", description: e?.message ?? "Failed to delete credential", variant: "destructive" });
+            } 
+          
+        },[toast,creds]);
 
     const loadAll = useCallback(async () => {
         try {
@@ -47,7 +61,22 @@ export default function CredentialsPane() {
                 {creds.map(c => (
                     <Card key={c._id} className="hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
+                            <div className="flex items-start justify-between">
                             <CardTitle className="text-lg truncate">{c.name}</CardTitle>
+                              <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                                                  <MoreVertical className="w-4 h-4" />
+                                                </Button>
+                        </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleDelete(c._id)} className="text-destructive">
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    </div>
                             <CardDescription className="text-xs flex items-center justify-between">
                                 {c.kind}
                                 <span>
@@ -65,9 +94,7 @@ export default function CredentialsPane() {
                                     Modify
                                 </Button>
 
-                                <Button variant="destructive" size="sm" onClick={() => {/* TODO: delete endpoint */ }}>
-                                    Delete
-                                </Button>
+                                
                             </div>
                         </CardContent>
                     </Card>

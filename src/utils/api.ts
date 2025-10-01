@@ -1,4 +1,4 @@
-import { NodeKind, RFEdge, RFNode } from "@/types"
+import { NodeKind, RFEdge, RFNode ,Credential} from "@/types"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
 
@@ -131,6 +131,10 @@ export const credentialApi = {
       method: "PUT",
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
+    }),
+    deleteCredential: (id: string) =>
+    apiRequest(`/credentials/${encodeURIComponent(id)}`, {
+      method: "DELETE",
     }),
 
 }

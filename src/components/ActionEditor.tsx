@@ -18,6 +18,12 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, Dia
 import { DialogFooter, DialogHeader } from "./ui/dialog"
 import { credentialApi } from "@/utils/api"
 import { useToast } from "@/hooks/use-toast"
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
+
 
 
 
@@ -407,7 +413,7 @@ export function ActionEditor() {
                         id="name"
                         type="text"
                         required
-                        placeholder="email credentials"
+                        placeholder="Enter name for your credentials"
                         onChange={(e) =>
                           handleCredChange("name", e.target.value)
                         }
@@ -460,7 +466,7 @@ export function ActionEditor() {
                         id="name"
                         type="text"
                         required
-                        placeholder="email credentials"
+                        placeholder="Enter name for your credentials"
                         onChange={(e) =>
                           handleCredChange("name", e.target.value)
                         }
@@ -495,7 +501,7 @@ export function ActionEditor() {
                         id="name"
                         type="text"
                         required
-                        placeholder="email credentials"
+                        placeholder="Enter name for your credentials"
                         onChange={(e) =>
                           handleCredChange("name", e.target.value)
                         }
@@ -581,121 +587,132 @@ export function ActionEditor() {
           Back to Dashboard
         </Button>
       </div>
-      <div className="grid grid-cols-3 gap-6 h-[800px]">
+      <ResizablePanelGroup direction="horizontal"className="grid grid-cols-3 gap-6 h-[800px]">
 
+        <ResizablePanel defaultSize={50}>
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Inputs</CardTitle>
 
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Inputs</CardTitle>
-
-            <p className="text-sm text-muted-foreground">Upstream chain data</p>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="max-h-[700px] overflow-y-auto">
-              {upstreamChain && upstreamChain.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">No upstream nodes</div>
-              ) : (
-                <div className="space-y-2">
-                  {upstreamChain && upstreamChain?.map((node, index) => (
-                    <Collapsible key={node.id} defaultOpen={index === upstreamChain.length - 1}>
-                      <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 border-b">
-                        <div className="flex items-center gap-2">
-                          <ChevronRight className="h-4 w-4 transition-transform data-[state=open]:hidden" />
-                          <ChevronDown className="h-4 w-4 transition-transform hidden data-[state=open]:block" />
-                          <span className="font-medium">{node.data.kind}</span>
-                          <span className="text-xs text-muted-foreground">({node.data.parameters.name})</span>
-                        </div>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="px-3 pb-3">
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="text-sm font-medium mb-2">Parameters</h4>
-                            <div className="bg-muted/30 rounded p-2">
-                              <JsonTree data={node.data.parameters} id={node.id} />
-                            </div>
+              <p className="text-sm text-muted-foreground">Upstream chain data</p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="max-h-[700px] overflow-y-auto">
+                {upstreamChain && upstreamChain.length === 0 ? (
+                  <div className="p-4 text-center text-muted-foreground">No upstream nodes</div>
+                ) : (
+                  <div className="space-y-2">
+                    {upstreamChain && upstreamChain?.map((node, index) => (
+                      <Collapsible key={node.id} defaultOpen={index === upstreamChain.length - 1}>
+                        <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 border-b">
+                          <div className="flex items-center gap-2">
+                            <ChevronRight className="h-4 w-4 transition-transform data-[state=open]:hidden" />
+                            <ChevronDown className="h-4 w-4 transition-transform hidden data-[state=open]:block" />
+                            <span className="font-medium">{node.data.kind}</span>
+                            <span className="text-xs text-muted-foreground">({node.data.parameters.name})</span>
                           </div>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="px-3 pb-3">
+                          <div className="space-y-3">
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">Parameters</h4>
+                              <JsonTree data={node.data.parameters} id={node.id} />
 
-                        </div>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                            </div>
 
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Edit Node</CardTitle>
-            <div className="flex items-center gap-2">
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+        <ResizableHandle />
 
-            </div>
-          </CardHeader>
-          <CardContent className="max-h-[700px] overflow-y-auto">
-            {selectedNode ? (
-              <div className="space-y-4">
-                <div className="p-3 bg-muted/50 rounded-lg">
-                  <h3 className="font-medium text-sm mb-1">Node Type</h3>
-                  <p className="text-sm text-muted-foreground">{selectedNode.data.kind}</p>
-                </div>
-                <div>
-                  <Select onOpenChange={(open) => open && handleGetCredentials(selectedNode.data.kind)}>
-                    <Label htmlFor="credentials">Credential to connect with
-                    </Label>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select Credential" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <Button onClick={handleCreateClick} size="sm">
-                          <Plus />
-                          Create new credential
-                        </Button>
-                        {
-                          (!credLoader) ?
-                            credArr.map((v, i) => {
+        <ResizablePanel defaultSize={50}>
 
-                              return (
-                                <SelectItem value="apple">{v?.name}</SelectItem>
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Edit Node</CardTitle>
+              <div className="flex items-center gap-2">
 
+              </div>
+            </CardHeader>
+            <CardContent className="max-h-[700px] overflow-y-auto">
+              {selectedNode ? (
+                <div className="space-y-4">
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <h3 className="font-medium text-sm mb-1">Node Type</h3>
+                    <p className="text-sm text-muted-foreground">{selectedNode.data.kind}</p>
+                  </div>
+                  <div>
+                    <Select onOpenChange={(open) => open && handleGetCredentials(selectedNode.data.kind)} >
+                      <Label htmlFor="credentials">Credential to connect with
+                      </Label>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select Credential" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <Button onClick={handleCreateClick} size="sm">
+                            <Plus />
+                            Create new credential
+                          </Button>
+                          {
+                            (!credLoader) ?
+                              credArr.map((v, i) => {
+
+                                return (
+                                  <SelectItem  key={v?._id}value={v?._id}>{v?.name}</SelectItem>
+
+                                )
+                              }) :
+                              (
+                                <div>loading...</div>
                               )
-                            }) :
-                            (
-                              <div>loading...</div>
-                            )
 
-                        }
+                          }
 
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {renderActionForm(selectedNode)}
+                  <Button onClick={() => console.log(formData)} className="w-full mt-6">Save Changes</Button>
                 </div>
-                {renderActionForm(selectedNode)}
-                <Button onClick={() => console.log(formData)} className="w-full mt-6">Save Changes</Button>
-              </div>
-            ) : (
-              <div className="p-4 text-center text-muted-foreground">No node selected</div>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">No node selected</div>
+              )}
+            </CardContent>
+          </Card>
+        </ResizablePanel>
 
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Outputs</CardTitle>
-            <p className="text-sm text-muted-foreground">Node execution results</p>
-          </CardHeader>
-          <CardContent className="max-h-[700px] overflow-y-auto">
-            <div className="p-4 text-center text-muted-foreground">
-              <p>Outputs will appear here after node execution</p>
-              <div className="mt-4 p-4 border-2 border-dashed border-muted rounded-lg">
-                <p className="text-xs">Ready to display execution results</p>
+        <ResizableHandle />
+
+        <ResizablePanel defaultSize={40}>
+
+          <Card className="overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg">Outputs</CardTitle>
+              <p className="text-sm text-muted-foreground">Node execution results</p>
+            </CardHeader>
+            <CardContent className="max-h-[700px] overflow-y-auto">
+              <div className="p-4 text-center text-muted-foreground">
+                <p>Outputs will appear here after node execution</p>
+                <div className="mt-4 p-4 border-2 border-dashed border-muted rounded-lg">
+                  <p className="text-xs">Ready to display execution results</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </ResizablePanel>
+
+      </ResizablePanelGroup>
     </div>
+
   )
 }
 
