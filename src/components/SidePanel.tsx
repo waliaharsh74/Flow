@@ -146,14 +146,7 @@ const SidePanel = ({workflowId}:sidePanelProps) => {
 
         <Separator />
 
-        <div className="space-y-2">
-          <Label>Name</Label>
-          <Input
-            value={selectedNode.data.parameters.name || ''}
-            onChange={(e) => updateParameter('name', e.target.value)}
-            placeholder="Enter node name"
-          />
-        </div>
+        
 
         <Separator />
 

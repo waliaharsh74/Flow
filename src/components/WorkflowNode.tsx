@@ -52,17 +52,17 @@ const getNodeTypeLabel = (kind: string) => {
 const getParameterSummary = (kind: string, parameters: any) => {
   switch (kind) {
     case 'trigger.form':
-      return `Form: ${parameters.formTitle || 'Untitled'}`;
+      return `Form: ${parameters?.formTitle || 'Untitled'}`;
     case 'trigger.cron':
-      return `Schedule: ${parameters.cronExpression || '* * * * *'}`;
+      return `Schedule: ${parameters?.cronExpression || '* * * * *'}`;
     case 'action.telegram':
-      return `Chat: ${parameters.chatId || 'Not configured'}`;
+      return `Chat: ${parameters?.chatId?.slice(0, 8) + '...' || 'Not configured'}`;
     case 'action.email':
-      return `To: ${parameters.to || 'Not configured'}`;
+      return `To: ${parameters?.to || 'Not configured'}`;
     case 'action.llm':
-      return `${parameters.provider || 'openai'}: ${parameters.model || 'gpt-3.5-turbo'}`;
+      return `${parameters?.provider || 'openai'}: ${parameters.model || 'gpt-3.5-turbo'}`;
     case 'logic.if':
-     { const conditionsCount = parameters.conditions?.conditions?.length || 0
+     { const conditionsCount = parameters?.conditions?.conditions?.length || 0
       return `${conditionsCount} condition${conditionsCount !== 1 ? 's' : ''}`};
     default:
       return '';

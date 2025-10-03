@@ -25,8 +25,8 @@ const LiveForm: React.FC = () => {
         return 'id-' + Math.random().toString(36).substr(2, 9);
     };
     const SAMPLE_FORM: FormSchema = {
-        title: "Contact Form",
-        description: "Please fill out this form to get in touch with us.",
+        formTitle: "Contact Form",
+        formDescription: "Please fill out this form to get in touch with us.",
         name: "form",
         elements: [
             {
@@ -153,9 +153,9 @@ const LiveForm: React.FC = () => {
         <div className="max-w-2xl mx-auto">
             <div className="bg-card rounded-lg p-8 border border-border">
                 <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-foreground mb-2">{schema?.title}</h2>
-                    {schema.description && (
-                        <p className="text-muted-foreground">{schema?.description}</p>
+                    <h2 className="text-2xl font-bold text-foreground mb-2">{schema?.formTitle}</h2>
+                    {schema.formDescription && (
+                        <p className="text-muted-foreground">{schema?.formDescription}</p>
                     )}
                 </div>
 

@@ -123,8 +123,8 @@ export interface PaletteItem {
 
 
 export type FormSchema = {
-    title: string;
-    description?: string;
+    formTitle: string;
+    formDescription?: string;
     elements: FormElement[];
     name: "form"
 };

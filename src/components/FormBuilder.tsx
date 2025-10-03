@@ -50,8 +50,8 @@ const createDefaultElement = (type: FormElement['type']): FormElement => {
 };
 
 const SAMPLE_FORM: FormSchema = {
-    title: "Contact Form",
-    description: "Please fill out this form to get in touch with us.",
+    formTitle: "Contact Form",
+    formDescription: "Please fill out this form to get in touch with us.",
     name: "form",
     elements: [
         {
@@ -167,7 +167,7 @@ const FormBuilder: React.FC = () => {
         try {
             const parsed = JSON.parse(importText);
 
-            if (!parsed.title || !Array.isArray(parsed.elements)) {
+            if (!parsed.formTitle || !Array.isArray(parsed.elements)) {
                 throw new Error('Invalid schema: must have title and elements array');
             }
 
@@ -468,8 +468,8 @@ const BuilderPanel: React.FC<{
                             <input
                                 id="form-title"
                                 type="text"
-                                value={schema.title}
-                                onChange={(e) => updateSchema({ title: e.target.value })}
+                                value={schema.formTitle}
+                                onChange={(e) => updateSchema({ formTitle: e.target.value })}
                                 className="w-full p-3 border border-input rounded-md bg-background"
                                 placeholder="Enter form title..."
                             />
@@ -480,8 +480,8 @@ const BuilderPanel: React.FC<{
                             </label>
                             <textarea
                                 id="form-description"
-                                value={schema.description || ''}
-                                onChange={(e) => updateSchema({ description: e.target.value })}
+                                value={schema.formDescription || ''}
+                                onChange={(e) => updateSchema({ formDescription: e.target.value })}
                                 className="w-full p-3 border border-input rounded-md bg-background resize-none"
                                 rows={3}
                                 placeholder="Enter form description..."
@@ -793,9 +793,9 @@ const PreviewForm: React.FC<{ schema: FormSchema }> = ({ schema }) => {
         <div className="max-w-2xl mx-auto">
             <div className="bg-card rounded-lg p-8 border border-border">
                 <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-foreground mb-2">{schema.title}</h2>
-                    {schema.description && (
-                        <p className="text-muted-foreground">{schema.description}</p>
+                    <h2 className="text-2xl font-bold text-foreground mb-2">{schema.formTitle}</h2>
+                    {schema.formDescription && (
+                        <p className="text-muted-foreground">{schema.formDescription}</p>
                     )}
                 </div>
 
