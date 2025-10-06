@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { workFlowApi } from "@/utils/api";
 import { useParams } from "react-router";
 import { Button } from "../components/ui/button";
+import { executionApi } from '../utils/api'
 
 
 
@@ -14,7 +15,7 @@ const LiveForm: React.FC = () => {
     const [isLive, setIsLive] = useState(false);
     const [msg, setMsg] = useState('');
     const [submittedValues, setSubmittedValues] = useState<FormValues | null>(null);
-    const { workflowId } = useParams();
+    const { workflowId, nodeId } = useParams();
 
     const isRadioElement = (element: FormElement): element is RadioElement => element.type === 'radio';
     const isFileElement = (element: FormElement): element is FileElement => element.type === 'file';
@@ -66,7 +67,7 @@ const LiveForm: React.FC = () => {
         setLoading(false)
         setMsg(res?.msg)
 
-    }, [schema,workflowId])
+    }, [schema, workflowId])
 
 
     useEffect(() => {
@@ -104,13 +105,18 @@ const LiveForm: React.FC = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (validateForm()) {
-            setSubmitted(true);
-            setSubmittedValues({ ...values });
+        try {
+            if (validateForm()) {
+                setSubmitted(true);
+                setSubmittedValues({ ...values });
+                await executionApi.executeFormTrigger(workflowId, nodeId, values)
+            }
+        } catch (error) {
+            console.log(error)
         }
+
     };
 
     const handleFileChange = (elementId: string, files: FileList | null) => {
@@ -273,14 +279,14 @@ const LiveForm: React.FC = () => {
                     </button>
                 </form>
 
-                {submitted && submittedValues && (
+                {/* {submitted && submittedValues && (
                     <div className="mt-8 p-4 bg-success/10 border border-success/20 rounded-lg">
                         <h3 className="font-semibold text-success mb-3">Form Submitted Successfully!</h3>
                         <div className="bg-background p-4 rounded border">
                             <pre className="text-sm overflow-x-auto">{JSON.stringify(submittedValues, null, 2)}</pre>
                         </div>
                     </div>
-                )}
+                )} */}
             </div>
         </div>
     );

@@ -139,3 +139,12 @@ export const credentialApi = {
 
 }
 
+export const executionApi={
+  executeFormTrigger:(workflowId:string,nodeId:string,payload:any)=>{
+    apiRequest(`/triggers/form/${workflowId}/${nodeId}/submit`,{
+      method:"POST",
+      body:JSON.stringify(payload)
+    })
+  }
+}
+

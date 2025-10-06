@@ -24,7 +24,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/form/:workflowId" element={<ProtectedRoute children={<FormBuilder />} />} />
-            <Route path="/form/live/:workflowId" element={<LiveForm />} />
+            <Route path="/form/live/:workflowId/:nodeId" element={<LiveForm />} />
             <Route path="/workflows/:workflowId/edit/action/:nodeId" element={<ProtectedRoute children={<ActionEditor />}  />}/>
             <Route path="*" element={<NotFound />} />
           </Routes>

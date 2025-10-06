@@ -165,6 +165,7 @@ export function ActionEditor() {
               data: {
                 ...node.data,
                 parameters: { ...(node.data?.parameters ?? {}), ...formData },
+                credentials:formData?.credId?? ""
               },
             }
           : node
