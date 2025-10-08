@@ -287,43 +287,7 @@ const TelegramActionEditor = ({ node, updateParameter }: any) => (
 
 const EmailActionEditor = ({ node, updateParameter }: any) => (
   <div className="space-y-4">
-    <div className="space-y-2">
-      <Label>To</Label>
-      <Input
-        value={node.data.parameters.to || ''}
-        onChange={(e) => updateParameter('to', e.target.value)}
-        placeholder="recipient@example.com"
-      />
-    </div>
-
-    <div className="space-y-2">
-      <Label>Subject</Label>
-      <Input
-        value={node.data.parameters.subject || ''}
-        onChange={(e) => updateParameter('subject', e.target.value)}
-        placeholder="Email subject"
-      />
-    </div>
-
-    <div className="space-y-2">
-      <Label>HTML Content</Label>
-      <Textarea
-        value={node.data.parameters.html || ''}
-        onChange={(e) => updateParameter('html', e.target.value)}
-        placeholder="HTML email content"
-        rows={4}
-      />
-    </div>
-
-    <div className="space-y-2">
-      <Label>Text Content</Label>
-      <Textarea
-        value={node.data.parameters.text || ''}
-        onChange={(e) => updateParameter('text', e.target.value)}
-        placeholder="Plain text email content"
-        rows={4}
-      />
-    </div>
+  
   </div>
 );
 

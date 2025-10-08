@@ -58,9 +58,9 @@ const getParameterSummary = (kind: string, parameters: any) => {
     case 'action.telegram':
       return `Chat: ${parameters?.chatId?.slice(0, 8) + '...' || 'Not configured'}`;
     case 'action.email':
-      return `To: ${parameters?.to || 'Not configured'}`;
+      return `To: ${parameters?.to.slice(0, 8) + '...' || 'Not configured'}`;
     case 'action.llm':
-      return `${parameters?.provider || 'openai'}: ${parameters.model || 'gpt-3.5-turbo'}`;
+      return `${parameters?.provider.slice(0, 8) + '...' || 'openai'}: ${parameters.model || 'gpt-3.5-turbo'}`;
     case 'logic.if':
      { const conditionsCount = parameters?.conditions?.conditions?.length || 0
       return `${conditionsCount} condition${conditionsCount !== 1 ? 's' : ''}`};

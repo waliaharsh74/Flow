@@ -126,7 +126,7 @@ export function ActionEditor() {
       const req = (key: string, label: string) => { if (!credData[key]) errors.push(`${label} is required`) }
 
       if (!credData.name) errors.push("Credential name is required")
-      if (kind === "action.email") { req("email","Email"); req("password","Password") }
+      if (kind === "action.email") { req("resendApi","Resend api token");  }
       if (kind === "action.telegram") { req("apiToken","Bot API Token") }
       if (kind === "action.llm") { req("apiKey","API Key"); req("provider","Provider") }
 
@@ -335,38 +335,22 @@ export function ActionEditor() {
                       />
 
                       <label
-                        htmlFor="email"
+                        htmlFor="resendApi"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-                        Email
-                      </label>
+Resend api token                      </label>
                       <input
-                        id="email"
-                        type="email"
+                        id="resendApi"
+                        type="text"
                         required
-                        placeholder="you@example.com"
+                        placeholder="Axy****db"
                         onChange={(e) =>
-                          handleCredChange("email", e.target.value)
+                          handleCredChange("resendApi", e.target.value)
                         }
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       />
 
-                      <label
-                        htmlFor="password"
-                        className="block text-sm font-medium text-gray-700 mb-1"
-                      >
-                        Password
-                      </label>
-                      <input
-                        id="password"
-                        type="password"
-                        required
-                        placeholder="********"
-                        onChange={(e) =>
-                          handleCredChange("password", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      />
+                      
                     </>
                   );
 
