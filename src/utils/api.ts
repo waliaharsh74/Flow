@@ -139,12 +139,90 @@ export const credentialApi = {
 
 }
 
-export const executionApi={
-  executeFormTrigger:(workflowId:string,nodeId:string,payload:any)=>{
-    apiRequest(`/triggers/form/${workflowId}/${nodeId}/submit`,{
-      method:"POST",
-      body:JSON.stringify(payload)
-    })
-  }
-}
+type ExecutionQuery = {
+  page?: number;
+  limit?: number;
+  status?: string;
+  workflowId?: string;
+};
+
+type ExecutionCreatePayload = {
+  workflowId: string;
+  triggerNodeId?: string;
+  triggerPayload?: unknown;
+};
+
+type ExecutionStatusUpdate = {
+  status: string;
+};
+
+export const executionApi = {
+  executeFormTrigger: (workflowId: string, nodeId: string, payload: any) =>
+    apiRequest(`/triggers/form/${workflowId}/${nodeId}/submit`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  createExecution: (payload: ExecutionCreatePayload) =>
+    apiRequest("/executions", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  listExecutions: (query: ExecutionQuery = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.set(key, String(value));
+      }
+    });
+    const search = params.toString();
+    return apiRequest(`/executions${search ? `?${search}` : ""}`, {
+      method: "GET",
+    });
+  },
+
+  getExecution: (id: string) =>
+    apiRequest(`/executions/${encodeURIComponent(id)}`, {
+      method: "GET",
+    }),
+
+  updateExecutionStatus: (id: string, status: ExecutionStatusUpdate) =>
+    apiRequest(`/executions/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(status),
+    }),
+
+  deleteExecution: (id: string) =>
+    apiRequest(`/executions/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    }),
+
+  getExecutionSteps: (executionId: string) =>
+    apiRequest(`/executions/${encodeURIComponent(executionId)}/steps`, {
+      method: "GET",
+    }),
+
+  getExecutionStep: (stepId: string) =>
+    apiRequest(`/execution-steps/${encodeURIComponent(stepId)}`, {
+      method: "GET",
+    }),
+
+  retryExecutionStep: (executionId: string, nodeId: string) =>
+    apiRequest(`/executions/${encodeURIComponent(executionId)}/steps/${encodeURIComponent(nodeId)}/retry`, {
+      method: "POST",
+    }),
+
+  runManualTrigger: (workflowId: string, nodeId: string, context?: unknown) =>
+    apiRequest(`/triggers/manual/${workflowId}/${nodeId}/run`, {
+      method: "POST",
+      body: JSON.stringify({ context }),
+    }),
+
+  runCronTrigger: (workflowId: string, nodeId: string, now?: string) =>
+    apiRequest(`/triggers/cron/${workflowId}/${nodeId}/run`, {
+      method: "POST",
+      body: JSON.stringify({ now }),
+    }),
+};
 

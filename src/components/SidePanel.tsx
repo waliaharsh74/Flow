@@ -144,7 +144,6 @@ const SidePanel = ({workflowId}:sidePanelProps) => {
           </div>
         </div>
 
-        <Separator />
 
         
 
@@ -293,41 +292,7 @@ const EmailActionEditor = ({ node, updateParameter }: any) => (
 
 const LLMActionEditor = ({ node, updateParameter }: any) => (
   <div className="space-y-4">
-    <div className="space-y-2">
-      <Label>Provider</Label>
-      <Select
-        value={node.data.parameters.provider || 'openai'}
-        onValueChange={(value) => updateParameter('provider', value)}
-      >
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="openai">OpenAI</SelectItem>
-          <SelectItem value="anthropic">Anthropic</SelectItem>
-          <SelectItem value="gemini">Google Gemini</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-
-    <div className="space-y-2">
-      <Label>Model</Label>
-      <Input
-        value={node.data.parameters.model || 'gpt-3.5-turbo'}
-        onChange={(e) => updateParameter('model', e.target.value)}
-        placeholder="gpt-3.5-turbo"
-      />
-    </div>
-
-    <div className="space-y-2">
-      <Label>Prompt</Label>
-      <Textarea
-        value={node.data.parameters.prompt || ''}
-        onChange={(e) => updateParameter('prompt', e.target.value)}
-        placeholder="Enter your prompt"
-        rows={6}
-      />
-    </div>
+   
   </div>
 );
 

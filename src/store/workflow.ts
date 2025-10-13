@@ -84,7 +84,10 @@ const createDefaultParameters = (kind: NodeKind): any => {
         model: 'gpt-3.5-turbo',
         prompt: '',
         vars: {},
-        options: {}
+        options: {},
+        outputs:{
+          text:""
+        }
       };
     default:
       return { options: {} };

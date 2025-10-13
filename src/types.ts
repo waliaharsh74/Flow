@@ -160,3 +160,75 @@ export type DateElement = BaseElement & { type: "date" };
 export type FormElement = RadioElement | CheckboxElement | FileElement | TextElement | DateElement;
 
 export type FormValues = Record<string, any>;
+
+export type ExecutionStatus =
+  | "PENDING"
+  | "RUNNING"
+  | "COMPLETED"
+  | "FAILED"
+  | "CANCELED"
+  | (string & {});
+
+export type ExecutionStepStatus =
+  | "PENDING"
+  | "RUNNING"
+  | "COMPLETED"
+  | "FAILED"
+  | "SKIPPED"
+  | (string & {});
+
+export interface Execution {
+  id: string;
+  workflowId: string;
+  userId?: string;
+  status: ExecutionStatus;
+  triggerNodeId?: string;
+  triggerPayload?: unknown;
+  createdAt: string;
+  updatedAt: string;
+  startedAt?: string;
+  endedAt?: string;
+  error?: unknown;
+}
+
+export interface ExecutionStep {
+  id: string;
+  executionId: string;
+  nodeId: string;
+  status: ExecutionStepStatus;
+  createdAt: string;
+  updatedAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  output?: unknown;
+  error?: unknown;
+}
+
+export type ExecutionQuery = {
+  page?: number;
+  limit?: number;
+  status?: ExecutionStatus;
+  workflowId?: string;
+};
+
+export type CreateExecutionPayload = {
+  workflowId: string;
+  triggerNodeId?: string;
+  triggerPayload?: unknown;
+};
+
+export type ExecutionState = {
+  executions: Execution[];
+  executionSteps: ExecutionStep[];
+  stepDetails: Record<string, ExecutionStep>;
+  selectedExecutionId: string | null;
+  selectedStepId: string | null;
+  total: number;
+  page: number;
+  limit: number;
+  isLoadingExecutions: boolean;
+  isLoadingSteps: boolean;
+  isMutatingExecution: boolean;
+  isMutatingStep: boolean;
+  error: string | null;
+};

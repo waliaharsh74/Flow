@@ -22,11 +22,15 @@ import { Textarea } from "./../components/ui/textarea"
 import { useWorkflowsStore } from "../store/worflows"
 import { useAuthStore } from "../store/auth"
 import { formatDistanceToNow } from "date-fns"
-import { Plus, MoreVertical, Play, Copy, Trash2, Edit, FileDown, FileUp, LogOut } from "lucide-react"
+import { Plus, MoreVertical, Play, Copy, Trash2, Edit, FileDown, FileUp, LogOut, RefreshCcw, Rocket, PauseCircle, RotateCcw, Loader2, Activity, Trash, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Toggle } from "@radix-ui/react-toggle"
 import { Switch } from "./ui/switch"
+import { ScrollArea } from "./ui/scroll-area"
+import { Separator } from "./ui/separator"
 import CredentialsPane from "./CredentialsPane"
+import { useExecutionsStore } from "@/store/executions"
+import { Execution, ExecutionStep } from "@/types"
 
 interface WorkflowDashboardProps {
   onEditWorkflow: (workflowId: string) => void
@@ -37,6 +41,9 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [newWorkflowName, setNewWorkflowName] = useState("")
   const [newWorkflowDescription, setNewWorkflowDescription] = useState("")
+  const [newExecutionWorkflowId, setNewExecutionWorkflowId] = useState("")
+  const [newExecutionNodeId, setNewExecutionNodeId] = useState("")
+  const [newExecutionPayload, setNewExecutionPayload] = useState("")
   const [importJson, setImportJson] = useState("")
   const [section, setSection] = useState<"workflows" | "credentials" | "executions">("workflows");
 
@@ -54,11 +61,41 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     importWorkflow, clearError, updateWorkflow } =
     useWorkflowsStore()
   const { user, signOut } = useAuthStore()
+   const {
+    executions,
+    executionSteps,
+    stepDetails,
+    selectedExecutionId,
+    selectedStepId,
+    isLoadingExecutions,
+    isLoadingSteps,
+    isMutatingExecution,
+    isMutatingStep,
+    error: executionsError,
+    loadExecutions,
+    selectExecution,
+    createExecution,
+    updateExecutionStatus,
+    deleteExecution,
+    retryExecutionStep,
+    loadExecutionStepDetail,
+    clearError: clearExecutionsError,
+  } = useExecutionsStore()
 
 
 
 
   const hasWorkflows = useMemo(() => workflows.length > 0, [workflows])
+  const hasExecutions = useMemo(() => executions.length > 0, [executions])
+  const selectedExecution = useMemo<Execution | null>(() => {
+    if (!selectedExecutionId) return null
+    return executions.find((execution) => execution.id === selectedExecutionId) ?? null
+  }, [executions, selectedExecutionId])
+  const currentStep = useMemo<ExecutionStep | null>(() => {
+    if (!selectedStepId) return null
+    return stepDetails[selectedStepId] ?? executionSteps.find((step) => step.id === selectedStepId) ?? null
+  }, [executionSteps, selectedStepId, stepDetails])
+
 
   const handleCreateWorkflow = useCallback(async () => {
     if (!newWorkflowName.trim()) return
@@ -82,6 +119,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
       })
     }
   }, [createWorkflow, newWorkflowDescription, newWorkflowName, onEditWorkflow, toast])
+
 
   const handleImportWorkflow = useCallback(async () => {
     try {
@@ -148,6 +186,131 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     },
     [exportWorkflow],
   )
+    const handleCreateExecution = useCallback(async () => {
+    if (!newExecutionWorkflowId.trim()) {
+      toast({
+        title: "Workflow required",
+        description: "Please provide a workflow ID to create an execution.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    let parsedPayload: unknown = undefined
+    if (newExecutionPayload.trim()) {
+      try {
+        parsedPayload = JSON.parse(newExecutionPayload)
+      } catch (error) {
+        toast({
+          title: "Invalid payload",
+          description: "Trigger payload must be valid JSON.",
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
+    const result = await createExecution({
+      workflowId: newExecutionWorkflowId.trim(),
+      triggerNodeId: newExecutionNodeId.trim() || undefined,
+      triggerPayload: parsedPayload,
+    })
+
+    if (result) {
+      toast({
+        title: "Execution created",
+        description: "A new execution has been created successfully.",
+      })
+      setNewExecutionWorkflowId("")
+      setNewExecutionNodeId("")
+      setNewExecutionPayload("")
+      await selectExecution(result.id)
+    } else {
+      toast({
+        title: "Unable to create execution",
+        description: executionsError ?? "Please try again",
+        variant: "destructive",
+      })
+    }
+  }, [createExecution, executionsError, newExecutionNodeId, newExecutionPayload, newExecutionWorkflowId, selectExecution, toast])
+
+  const handleSelectExecution = useCallback(
+    async (executionId: string) => {
+      await selectExecution(executionId)
+    },
+    [selectExecution],
+  )
+
+  const handleUpdateExecutionStatus = useCallback(
+    async (executionId: string, status: Execution["status"]) => {
+      const updated = await updateExecutionStatus(executionId, status)
+      if (updated) {
+        toast({
+          title: "Execution updated",
+          description: `Execution status updated to ${status}.`,
+        })
+      } else {
+        toast({
+          title: "Unable to update execution",
+          description: executionsError ?? "Please try again",
+          variant: "destructive",
+        })
+      }
+    },
+    [executionsError, toast, updateExecutionStatus],
+  )
+
+  const handleDeleteExecution = useCallback(
+    async (executionId: string) => {
+      const confirmed = await deleteExecution(executionId)
+      if (confirmed) {
+        toast({
+          title: "Execution deleted",
+          description: "Execution has been deleted successfully.",
+        })
+      } else {
+        toast({
+          title: "Unable to delete execution",
+          description: executionsError ?? "Please try again",
+          variant: "destructive",
+        })
+      }
+    },
+    [deleteExecution, executionsError, toast],
+  )
+
+  const handleRetryStep = useCallback(
+    async (executionId: string, nodeId: string) => {
+      const success = await retryExecutionStep(executionId, nodeId)
+      if (success) {
+        toast({
+          title: "Retry scheduled",
+          description: "The step will run again shortly.",
+        })
+      } else {
+        toast({
+          title: "Unable to retry step",
+          description: executionsError ?? "Please try again",
+          variant: "destructive",
+        })
+      }
+    },
+    [executionsError, retryExecutionStep, toast],
+  )
+
+  const handleViewStep = useCallback(
+    async (stepId: string) => {
+      const result = await loadExecutionStepDetail(stepId)
+      if (!result) {
+        toast({
+          title: "Unable to load step",
+          description: executionsError ?? "Please try again",
+          variant: "destructive",
+        })
+      }
+    },
+    [executionsError, loadExecutionStepDetail, toast],
+  )
 
   const handleDuplicateWorkflow = useCallback(
     async (workflowId: string) => {
@@ -205,6 +368,23 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
       }
     })
   }, [loadWorkflows, toast])
+
+  useEffect(() => {
+    if (!user) return
+    if (section === "executions") {
+      loadExecutions()
+    }
+  }, [loadExecutions, section, user])
+
+  useEffect(() => {
+    if (!executionsError) return
+    toast({
+      title: "Execution error",
+      description: executionsError,
+      variant: "destructive",
+    })
+    clearExecutionsError()
+  }, [clearExecutionsError, executionsError, toast])
 
   useEffect(() => {
     if (!user) return
@@ -417,10 +597,276 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
       </div> )}
       {section === "credentials" && <CredentialsPane />}
       {section === "executions" && (
-    <div className="text-center py-12 text-gray-600">
-      No executions yet.
-    </div>
-  )}
+   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Rocket className="h-4 w-4" /> Start execution
+              </CardTitle>
+              <CardDescription>Create a new execution by providing a workflow and optional trigger data.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="execution-workflow">Workflow ID</Label>
+                <Input
+                  id="execution-workflow"
+                  placeholder="workflow-id"
+                  value={newExecutionWorkflowId}
+                  onChange={(event) => setNewExecutionWorkflowId(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="execution-node">Trigger node ID</Label>
+                <Input
+                  id="execution-node"
+                  placeholder="node-id (optional)"
+                  value={newExecutionNodeId}
+                  onChange={(event) => setNewExecutionNodeId(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2 md:col-span-3">
+                <Label htmlFor="execution-payload">Trigger payload (JSON)</Label>
+                <Textarea
+                  id="execution-payload"
+                  placeholder="Enter key-value"
+                  value={newExecutionPayload}
+                  onChange={(event) => setNewExecutionPayload(event.target.value)}
+                  className="min-h-[120px] font-mono"
+                />
+              </div>
+              <div className="md:col-span-3 flex justify-end">
+                <Button onClick={handleCreateExecution} disabled={isMutatingExecution}>
+                  {isMutatingExecution ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
+                  Create execution
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid gap-6 lg:grid-cols-[2fr_3fr]">
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Executions
+                  </CardTitle>
+                  <CardDescription>Browse and manage recent executions.</CardDescription>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => loadExecutions()}
+                  disabled={isLoadingExecutions}
+                >
+                  {isLoadingExecutions ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0">
+                <ScrollArea className="h-[420px]">
+                  <div className="divide-y">
+                    {hasExecutions ? (
+                      executions.map((execution) => {
+                        const isSelected = execution.id === selectedExecutionId
+                        return (
+                          <button
+                            key={execution.id}
+                            type="button"
+                            onClick={() => handleSelectExecution(execution.id)}
+                            className={`w-full text-left transition hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${isSelected ? "bg-muted" : ""}`}
+                          >
+                            <div className="px-4 py-3 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium">{execution.id}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Workflow: {execution.workflowId || "Unknown"}
+                                  </p>
+                                </div>
+                                <Badge variant={execution.status === "FAILED" ? "destructive" : execution.status === "RUNNING" ? "default" : "secondary"}>
+                                  {execution.status}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span>Created {formatDistanceToNow(new Date(execution.createdAt), { addSuffix: true })}</span>
+                                {execution.startedAt && (
+                                  <>
+                                    <Separator orientation="vertical" className="h-3" />
+                                    <span>Started {formatDistanceToNow(new Date(execution.startedAt), { addSuffix: true })}</span>
+                                  </>
+                                )}
+                              </div>
+                              <div className="flex flex-wrap gap-2 pt-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    handleSelectExecution(execution.id)
+                                  }}
+                                >
+                                  <Eye className="h-3 w-3 mr-1" /> View
+                                </Button>
+                                {execution.status !== "RUNNING" && execution.status !== "COMPLETED" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(event) => {
+                                      event.stopPropagation()
+                                      handleUpdateExecutionStatus(execution.id, "RUNNING")
+                                    }}
+                                  >
+                                    <Play className="h-3 w-3 mr-1" /> Resume
+                                  </Button>
+                                )}
+                                {execution.status === "RUNNING" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={(event) => {
+                                      event.stopPropagation()
+                                      handleUpdateExecutionStatus(execution.id, "CANCELED")
+                                    }}
+                                  >
+                                    <PauseCircle className="h-3 w-3 mr-1" /> Cancel
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={(event) => {
+                                    event.stopPropagation()
+                                    handleDeleteExecution(execution.id)
+                                  }}
+                                >
+                                  <Trash className="h-3 w-3 mr-1" /> Delete
+                                </Button>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })
+                    ) : (
+                      <div className="py-12 text-center text-sm text-muted-foreground">
+                        {isLoadingExecutions ? "Loading executions..." : "No executions yet. Create one to get started."}
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            <Card className="h-full">
+              <CardHeader>
+                <CardTitle>Execution details</CardTitle>
+                <CardDescription>
+                  {selectedExecution
+                    ? `Inspect status and step history for execution ${selectedExecution.id}.`
+                    : "Select an execution to view its details."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {selectedExecution ? (
+                  <div className="space-y-4">
+                    <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Workflow</p>
+                          <p className="font-medium">{selectedExecution.workflowId || "Unknown"}</p>
+                        </div>
+                        <Badge variant={selectedExecution.status === "FAILED" ? "destructive" : selectedExecution.status === "RUNNING" ? "default" : "secondary"}>
+                          {selectedExecution.status}
+                        </Badge>
+                      </div>
+                      <div className="grid gap-1 text-xs text-muted-foreground">
+                        <span>Created {formatDistanceToNow(new Date(selectedExecution.createdAt), { addSuffix: true })}</span>
+                        {selectedExecution.startedAt && (
+                          <span>Started {formatDistanceToNow(new Date(selectedExecution.startedAt), { addSuffix: true })}</span>
+                        )}
+                        {selectedExecution.endedAt && (
+                          <span>Ended {formatDistanceToNow(new Date(selectedExecution.endedAt), { addSuffix: true })}</span>
+                        )}
+                      </div>
+                      {selectedExecution.error && (
+                        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                          {typeof selectedExecution.error === "string"
+                            ? selectedExecution.error
+                            : JSON.stringify(selectedExecution.error, null, 2)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="font-semibold">Steps</h4>
+                      <ScrollArea className="h-[260px] rounded-md border">
+                        <div className="divide-y">
+                          {isLoadingSteps ? (
+                            <div className="py-8 text-center text-sm text-muted-foreground">Loading steps...</div>
+                          ) : executionSteps.length ? (
+                            executionSteps.map((step) => (
+                              <div key={step.id} className="p-4 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="font-medium">{step.nodeId}</p>
+                                    <p className="text-xs text-muted-foreground">Step ID: {step.id}</p>
+                                  </div>
+                                  <Badge variant={step.status === "FAILED" ? "destructive" : step.status === "RUNNING" ? "default" : "secondary"}>
+                                    {step.status}
+                                  </Badge>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleViewStep(step.id)}
+                                  >
+                                    <Eye className="h-3 w-3 mr-1" /> View details
+                                  </Button>
+                                  {step.status === "FAILED" && (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleRetryStep(selectedExecution.id, step.nodeId)}
+                                      disabled={isMutatingStep}
+                                    >
+                                      {isMutatingStep ? (
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                      ) : (
+                                        <RotateCcw className="h-3 w-3 mr-1" />
+                                      )}
+                                      Retry step
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="py-8 text-center text-sm text-muted-foreground">No steps recorded yet.</div>
+                          )}
+                        </div>
+                      </ScrollArea>
+                    </div>
+
+                    {currentStep && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <Eye className="h-4 w-4" /> Step details
+                        </h4>
+                        <pre className="rounded-md bg-muted p-4 text-xs overflow-auto max-h-60">
+                          {JSON.stringify(currentStep, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-sm text-muted-foreground">
+                    Select an execution from the list to view its details.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

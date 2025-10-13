@@ -224,7 +224,7 @@ export function ActionEditor() {
       case "action.llm":
         return (
           <div className="space-y-4">
-            <div>
+            {/* <div>
               <Label htmlFor="model">Model</Label>
               <Select value={formData.model ?? "gpt-4o-mini"} onValueChange={(v) => handleFormChange("model", v)}>
                 <SelectTrigger><SelectValue placeholder="Pick a model" /></SelectTrigger>
@@ -234,7 +234,7 @@ export function ActionEditor() {
                   <SelectItem value="claude-3.5-sonnet">Claude 3.5 Sonnet</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
             <div>
               <Label htmlFor="systemPrompt">System Prompt</Label>
               <Textarea id="systemPrompt" value={formData.systemPrompt ?? ""} onChange={(e) => handleFormChange("systemPrompt", e.target.value)} placeholder="You are a helpful assistant..." rows={3} />
@@ -437,7 +437,8 @@ Resend api token                      </label>
                       >
                         <option value="openai">OpenAI</option>
                         <option value="anthropic">Anthropic</option>
-                        <option value="custom">Custom</option>
+                        <option value="gemini">Gemini</option>
+                        <option value="groq">Groq</option>
                       </select>
                     </>
                   );
