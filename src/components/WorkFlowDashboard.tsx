@@ -331,7 +331,27 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     },
     [duplicateWorkflow, onEditWorkflow, toast],
   )
-  const handleToogleSwitch = useCallback(async (workflowId, isActive) => {
+  const handleExecuteWorkflow = useCallback(
+    async (workflowId: string) => {
+      const execution = await createExecution({ workflowId })
+      if (execution) {
+        toast({
+          title: "Execution started",
+          description: "The workflow is now running.",
+        })
+        setSection("executions")
+        await selectExecution(execution.id)
+      } else {
+        toast({
+          title: "Unable to execute workflow",
+          description: executionsError ?? "Please try again",
+          variant: "destructive",
+        })
+      }
+    },
+    [createExecution, executionsError, selectExecution, toast],
+  )
+  const handleToogleSwitch = useCallback(async (workflowId: string, isActive: boolean) => {
     try {
       const result = await updateWorkflow(workflowId, {
 
@@ -351,7 +371,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
       });
     }
 
-  }, [])
+  }, [toast, updateWorkflow])
 
 
   
@@ -545,6 +565,10 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleExecuteWorkflow(workflow.id)}>
+                          <Rocket className="w-4 h-4 mr-2" />
+                          Execute
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
@@ -807,6 +831,9 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                                 <div className="flex items-center justify-between">
                                   <div>
                                     <p className="font-medium">{step.nodeId}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {step.nodeType ? `Type: ${step.nodeType}` : "Type: Unknown"}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">Step ID: {step.id}</p>
                                   </div>
                                   <Badge variant={step.status === "FAILED" ? "destructive" : step.status === "RUNNING" ? "default" : "secondary"}>
@@ -851,6 +878,14 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                         <h4 className="font-semibold flex items-center gap-2">
                           <Eye className="h-4 w-4" /> Step details
                         </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+                          <span>
+                            <span className="font-medium text-foreground">Node ID:</span> {currentStep.nodeId}
+                          </span>
+                          <span>
+                            <span className="font-medium text-foreground">Node type:</span> {currentStep.nodeType ?? "Unknown"}
+                          </span>
+                        </div>
                         <pre className="rounded-md bg-muted p-4 text-xs overflow-auto max-h-60">
                           {JSON.stringify(currentStep, null, 2)}
                         </pre>

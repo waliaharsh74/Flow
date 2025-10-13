@@ -42,6 +42,7 @@ const mapExecutionStep = (payload: any): ExecutionStep => {
     id,
     executionId: executionId ?? "",
     nodeId: payload?.nodeId ?? payload?.id ?? "",
+    nodeType: payload?.nodeType ?? payload?.node?.type ?? payload?.type ?? undefined,
     status: payload?.status ?? "PENDING",
     createdAt: payload?.createdAt ?? new Date().toISOString(),
     updatedAt: payload?.updatedAt ?? undefined,

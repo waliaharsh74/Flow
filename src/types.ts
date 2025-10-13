@@ -195,6 +195,7 @@ export interface ExecutionStep {
   id: string;
   executionId: string;
   nodeId: string;
+  nodeType?: string;
   status: ExecutionStepStatus;
   createdAt: string;
   updatedAt?: string;

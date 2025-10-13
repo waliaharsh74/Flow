@@ -1,73 +1,67 @@
-# Welcome to your Lovable project
+# Flow - Workflow Automation Dashboard
 
-## Project info
+Flow is a React + Vite application that provides a visual environment for designing, managing, and executing automation workflows. The dashboard makes it easy to iterate on node-based workflows, manage credentials, and monitor historical executions from a single place.
 
-**URL**: https://lovable.dev/projects/816b76f8-4e5d-443f-b479-4423c55e390d
+## Features
 
-## How can I edit this code?
+- **Workflow builder** – Create, edit, duplicate, and export node-based workflows with an intuitive UI.
+- **Credential management** – Store and manage the secrets used across your automations.
+- **Execution console** – Trigger new executions, inspect real-time status, review step-by-step logs, and retry failed nodes.
+- **Import & export** – Move automation definitions between environments with JSON import/export.
+- **Status insights** – Track when workflows were updated, whether they are active, and how executions progress over time.
 
-There are several ways of editing your application.
+## Getting started
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/816b76f8-4e5d-443f-b479-4423c55e390d) and start prompting.
+- Node.js 18 or newer
+- npm 9 or newer
 
-Changes made via Lovable will be committed automatically to this repo.
+### Installation
 
-**Use your preferred IDE**
+```bash
+# Install dependencies
+npm install
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080` by default.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Available scripts
 
-**Use GitHub Codespaces**
+- `npm run dev` – Start the development server with hot reloading.
+- `npm run build` – Build the production bundle.
+- `npm run preview` – Preview the production build locally.
+- `npm run lint` – Run ESLint using the project configuration.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project structure
 
-## What technologies are used for this project?
+```
+src/
+  components/       Reusable UI elements and the main dashboard views
+  pages/            Route-level components
+  store/            Zustand stores that manage application state
+  types.ts          Shared TypeScript types
+  utils/            API helpers and supporting utilities
+```
 
-This project is built with:
+## Environment variables
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Check `src/utils/api.ts` for the API base URL configuration. Update your `.env` file as needed to point to the correct backend services.
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/816b76f8-4e5d-443f-b479-4423c55e390d) and click on Share -> Publish.
+Build the app with `npm run build` and serve the contents of the `dist` directory using any static host (Vercel, Netlify, AWS S3, etc.).
 
-## Can I connect a custom domain to my Lovable project?
+## Contributing
 
-Yes, you can!
+1. Fork the repository and create a feature branch.
+2. Make your changes and add tests when applicable.
+3. Run `npm run lint` to ensure the codebase remains healthy.
+4. Submit a pull request describing your updates.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is distributed under the MIT License. See `LICENSE` (if present) for more information.
