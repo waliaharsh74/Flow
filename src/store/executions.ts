@@ -7,6 +7,7 @@ const generateId = () => Math.random().toString(36).slice(2, 11);
 const mapExecution = (payload: any): Execution => {
   const id = String(payload?._id ?? payload?.id ?? generateId());
   const workflowSource = payload?.workflow;
+  // const workflowName=payload?.workflow.workflowName
   const workflowId =
     typeof workflowSource === "string"
       ? workflowSource
@@ -18,6 +19,7 @@ const mapExecution = (payload: any): Execution => {
   return {
     id,
     workflowId: workflowId ?? "",
+    workflow:payload?.workflow,
     userId: userId ?? undefined,
     status: (payload?.status ?? "PENDING") as ExecutionStatus,
     triggerNodeId: payload?.triggerNodeId ?? payload?.nodeId ?? undefined,
@@ -42,6 +44,7 @@ const mapExecutionStep = (payload: any): ExecutionStep => {
     id,
     executionId: executionId ?? "",
     nodeId: payload?.nodeId ?? payload?.id ?? "",
+        nodeType: payload?.nodeType ?? payload?.node?.type ?? payload?.type ?? undefined,
     status: payload?.status ?? "PENDING",
     createdAt: payload?.createdAt ?? new Date().toISOString(),
     updatedAt: payload?.updatedAt ?? undefined,

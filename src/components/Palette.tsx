@@ -7,7 +7,7 @@ import { actionItems, logicItems, triggerItems } from '@/Items-data';
 
 
 const Palette = () => {
-  const { nodes, addTrigger, addAction, addIf ,getWorkflowState} = useWorkflowStore();
+  const { nodes, addTrigger, addAction, addIf } = useWorkflowStore();
   const [isOpen, setIsOpen] = useState(false);
 
   const hasTrigger = nodes.some(node => node.data.kind.startsWith('trigger.'));
@@ -31,8 +31,8 @@ const Palette = () => {
     <div className="w-64 bg-workflow-node border-r border-border p-4">
       <h2 className="text-lg font-semibold mb-4 text-foreground">Add Steps</h2>
       
- 
-      <div className="mb-6">
+      {/* if logic soon pnding h  */}
+      {/* <div className="mb-6">
         <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">
           Logic
         </h3>
@@ -59,7 +59,7 @@ const Palette = () => {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <div className="mb-6">
         <h3 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wide">

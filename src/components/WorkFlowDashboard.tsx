@@ -24,13 +24,13 @@ import { useAuthStore } from "../store/auth"
 import { formatDistanceToNow } from "date-fns"
 import { Plus, MoreVertical, Play, Copy, Trash2, Edit, FileDown, FileUp, LogOut, RefreshCcw, Rocket, PauseCircle, RotateCcw, Loader2, Activity, Trash, Eye } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { Toggle } from "@radix-ui/react-toggle"
 import { Switch } from "./ui/switch"
 import { ScrollArea } from "./ui/scroll-area"
 import { Separator } from "./ui/separator"
 import CredentialsPane from "./CredentialsPane"
 import { useExecutionsStore } from "@/store/executions"
 import { Execution, ExecutionStep } from "@/types"
+import StartExecution from "./StartExecution"
 
 interface WorkflowDashboardProps {
   onEditWorkflow: (workflowId: string) => void
@@ -38,30 +38,25 @@ interface WorkflowDashboardProps {
 
 export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [showImportDialog, setShowImportDialog] = useState(false)
   const [newWorkflowName, setNewWorkflowName] = useState("")
   const [newWorkflowDescription, setNewWorkflowDescription] = useState("")
-  const [newExecutionWorkflowId, setNewExecutionWorkflowId] = useState("")
-  const [newExecutionNodeId, setNewExecutionNodeId] = useState("")
-  const [newExecutionPayload, setNewExecutionPayload] = useState("")
-  const [importJson, setImportJson] = useState("")
   const [section, setSection] = useState<"workflows" | "credentials" | "executions">("workflows");
 
   const { toast } = useToast();
 
 
-  const { workflows,
+  const { 
+    workflows,
     isLoading,
     error,
     loadWorkflows,
     createWorkflow,
     deleteWorkflow,
-    duplicateWorkflow,
-    exportWorkflow,
-    importWorkflow, clearError, updateWorkflow } =
+     updateWorkflow
+     } =
     useWorkflowsStore()
   const { user, signOut } = useAuthStore()
-   const {
+  const {
     executions,
     executionSteps,
     stepDetails,
@@ -69,7 +64,6 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     selectedStepId,
     isLoadingExecutions,
     isLoadingSteps,
-    isMutatingExecution,
     isMutatingStep,
     error: executionsError,
     loadExecutions,
@@ -87,10 +81,12 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
 
   const hasWorkflows = useMemo(() => workflows.length > 0, [workflows])
   const hasExecutions = useMemo(() => executions.length > 0, [executions])
+
   const selectedExecution = useMemo<Execution | null>(() => {
     if (!selectedExecutionId) return null
     return executions.find((execution) => execution.id === selectedExecutionId) ?? null
   }, [executions, selectedExecutionId])
+
   const currentStep = useMemo<ExecutionStep | null>(() => {
     if (!selectedStepId) return null
     return stepDetails[selectedStepId] ?? executionSteps.find((step) => step.id === selectedStepId) ?? null
@@ -121,34 +117,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   }, [createWorkflow, newWorkflowDescription, newWorkflowName, onEditWorkflow, toast])
 
 
-  const handleImportWorkflow = useCallback(async () => {
-    try {
-      const schema = JSON.parse(importJson)
-      const result = await importWorkflow(schema.data.name || "Imported Workflow", schema)
-      if (result.success && result.workflow) {
-        setImportJson("")
-        setShowImportDialog(false)
-        toast({
-          title: "Imported!",
-          description: "Workflow imported successfully",
-        })
-        onEditWorkflow(result.workflow.id)
-      } else {
-        toast({
-          title: "Error!",
-          description: result.error || "Can't import workflow! Please try again",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Failed to import workflow:", error)
-      toast({
-        title: "Error!",
-        description: "Invalid workflow JSON",
-        variant: "destructive",
-      })
-    }
-  }, [importJson, importWorkflow, onEditWorkflow, toast])
+
 
   const handleDeleteWorkFlow = useCallback(
     async (workflowId: string) => {
@@ -168,71 +137,6 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     },
     [deleteWorkflow, toast],
   )
-
-  const handleExportWorkflow = useCallback(
-    (workflowId: string) => {
-      const schema = exportWorkflow(workflowId)
-      if (schema) {
-        const blob = new Blob([JSON.stringify(schema, null, 2)], { type: "application/json" })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement("a")
-        a.href = url
-        a.download = `${schema.data.name}.json`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
-      }
-    },
-    [exportWorkflow],
-  )
-    const handleCreateExecution = useCallback(async () => {
-    if (!newExecutionWorkflowId.trim()) {
-      toast({
-        title: "Workflow required",
-        description: "Please provide a workflow ID to create an execution.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    let parsedPayload: unknown = undefined
-    if (newExecutionPayload.trim()) {
-      try {
-        parsedPayload = JSON.parse(newExecutionPayload)
-      } catch (error) {
-        toast({
-          title: "Invalid payload",
-          description: "Trigger payload must be valid JSON.",
-          variant: "destructive",
-        })
-        return
-      }
-    }
-
-    const result = await createExecution({
-      workflowId: newExecutionWorkflowId.trim(),
-      triggerNodeId: newExecutionNodeId.trim() || undefined,
-      triggerPayload: parsedPayload,
-    })
-
-    if (result) {
-      toast({
-        title: "Execution created",
-        description: "A new execution has been created successfully.",
-      })
-      setNewExecutionWorkflowId("")
-      setNewExecutionNodeId("")
-      setNewExecutionPayload("")
-      await selectExecution(result.id)
-    } else {
-      toast({
-        title: "Unable to create execution",
-        description: executionsError ?? "Please try again",
-        variant: "destructive",
-      })
-    }
-  }, [createExecution, executionsError, newExecutionNodeId, newExecutionPayload, newExecutionWorkflowId, selectExecution, toast])
 
   const handleSelectExecution = useCallback(
     async (executionId: string) => {
@@ -312,24 +216,25 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     [executionsError, loadExecutionStepDetail, toast],
   )
 
-  const handleDuplicateWorkflow = useCallback(
+  const handleExecuteWorkflow = useCallback(
     async (workflowId: string) => {
-      const result = await duplicateWorkflow(workflowId)
-      if (result.success && result.workflow) {
+      const execution = await createExecution({ workflowId })
+      if (execution) {
         toast({
-          title: "Saved!",
-          description: "Workflow duplicated successfully",
+          title: "Execution started",
+          description: "The workflow is now running.",
         })
-        onEditWorkflow(result.workflow.id)
+        setSection("executions")
+        await selectExecution(execution.id)
       } else {
         toast({
-          title: "Error!",
-          description: result.error || "Can't duplicate workflow! Please try again",
+          title: "Unable to execute workflow",
+          description: executionsError ?? "Please try again",
           variant: "destructive",
         })
       }
     },
-    [duplicateWorkflow, onEditWorkflow, toast],
+    [createExecution, executionsError, selectExecution, toast],
   )
   const handleToogleSwitch = useCallback(async (workflowId, isActive) => {
     try {
@@ -351,10 +256,10 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
       });
     }
 
-  }, [])
+  }, [toast, updateWorkflow])
 
 
-  
+
 
   useEffect(() => {
     if (!user) return
@@ -421,40 +326,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
               ))}
             </div>
             <div className="flex items-center gap-4">
-              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <FileUp className="w-4 h-4 mr-2" />
-                    Import
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Import Workflow</DialogTitle>
-                    <DialogDescription>Paste your n8n workflow JSON to import it</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="import-json">Workflow JSON</Label>
-                      <Textarea
-                        id="import-json"
-                        placeholder="Paste your workflow JSON here..."
-                        value={importJson}
-                        onChange={(e) => setImportJson(e.target.value)}
-                        rows={10}
-                      />
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setShowImportDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleImportWorkflow} disabled={!importJson.trim()}>
-                        Import
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+             
 
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>
@@ -510,139 +382,97 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
 
       {section === "workflows" && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {isLoading ? (
-          <div className="text-center py-12 text-gray-600">Loading workflows...</div>
-        ) : !hasWorkflows ? (
-          <div className="text-center py-12">
-            <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <Plus className="w-8 h-8 text-gray-400" />
+          {isLoading ? (
+            <div className="text-center py-12 text-gray-600">Loading workflows...</div>
+          ) : !hasWorkflows ? (
+            <div className="text-center py-12">
+              <div className="max-w-md mx-auto">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Plus className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No workflows yet</h3>
+                <p className="text-gray-600 mb-6">Create your first workflow to get started with automation</p>
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Your First Workflow
+                </Button>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No workflows yet</h3>
-              <p className="text-gray-600 mb-6">Create your first workflow to get started with automation</p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Workflow
-              </Button>
             </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {workflows.map((workflow) => (
-              <Card key={workflow.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg truncate">{workflow.name}</CardTitle>
-                      {workflow.description && (
-                        <CardDescription className="mt-1 line-clamp-2">{workflow.description}</CardDescription>
-                      )}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        {/* baad m add karenge */}
-                        {/* <DropdownMenuItem onClick={() => handleDuplicateWorkflow(workflow.id)}>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {workflows.map((workflow) => (
+                <Card key={workflow.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg truncate">{workflow.name}</CardTitle>
+                        {workflow.description && (
+                          <CardDescription className="mt-1 line-clamp-2">{workflow.description}</CardDescription>
+                        )}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleExecuteWorkflow(workflow.id)}>
+                            <Rocket className="w-4 h-4 mr-2" />
+                            Execute
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
+                            <Edit className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          {/* baad m add karenge */}
+                          {/* <DropdownMenuItem onClick={() => handleDuplicateWorkflow(workflow.id)}>
                           <Copy className="w-4 h-4 mr-2" />
                           Duplicate
                         </DropdownMenuItem> */}
-                        <DropdownMenuItem onClick={() => handleExportWorkflow(workflow.id)}>
-                          <FileDown className="w-4 h-4 mr-2" />
-                          Export
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDeleteWorkFlow(workflow.id)} className="text-destructive">
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                    <span>
-                      {workflow.nodes.length} node{workflow.nodes.length !== 1 ? "s" : ""}
-                    </span>
-                    <div className="flex items-center space-x-2">
-
-
-
-                      <Label htmlFor="active-mode">{workflow.isActive ? "Active" : "Inactive"}</Label>
-                      <Switch id="active-mode" checked={workflow.isActive} onClick={() => handleToogleSwitch(workflow.id, workflow.isActive)} >
-                      </Switch>
+                         
+                          <DropdownMenuItem onClick={() => handleDeleteWorkFlow(workflow.id)} className="text-destructive">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
-                      Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
-                    </span>
-                    <Button size="sm" onClick={() => onEditWorkflow(workflow.id)} className="ml-2">
-                      <Play className="w-3 h-3 mr-1" />
-                      Edit
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div> )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                      <span>
+                        {workflow.nodes.length} node{workflow.nodes.length !== 1 ? "s" : ""}
+                      </span>
+                      <div className="flex items-center space-x-2">
+
+
+
+                        <Label htmlFor="active-mode">{workflow.isActive ? "Active" : "Inactive"}</Label>
+                        <Switch id="active-mode" checked={workflow.isActive} onClick={() => handleToogleSwitch(workflow.id, workflow.isActive)} >
+                        </Switch>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
+                      </span>
+                      <Button size="sm" onClick={() => onEditWorkflow(workflow.id)} className="ml-2">
+                        <Play className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>)}
       {section === "credentials" && <CredentialsPane />}
       {section === "executions" && (
-   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Rocket className="h-4 w-4" /> Start execution
-              </CardTitle>
-              <CardDescription>Create a new execution by providing a workflow and optional trigger data.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="execution-workflow">Workflow ID</Label>
-                <Input
-                  id="execution-workflow"
-                  placeholder="workflow-id"
-                  value={newExecutionWorkflowId}
-                  onChange={(event) => setNewExecutionWorkflowId(event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="execution-node">Trigger node ID</Label>
-                <Input
-                  id="execution-node"
-                  placeholder="node-id (optional)"
-                  value={newExecutionNodeId}
-                  onChange={(event) => setNewExecutionNodeId(event.target.value)}
-                />
-              </div>
-              <div className="space-y-2 md:col-span-3">
-                <Label htmlFor="execution-payload">Trigger payload (JSON)</Label>
-                <Textarea
-                  id="execution-payload"
-                  placeholder="Enter key-value"
-                  value={newExecutionPayload}
-                  onChange={(event) => setNewExecutionPayload(event.target.value)}
-                  className="min-h-[120px] font-mono"
-                />
-              </div>
-              <div className="md:col-span-3 flex justify-end">
-                <Button onClick={handleCreateExecution} disabled={isMutatingExecution}>
-                  {isMutatingExecution ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Rocket className="h-4 w-4 mr-2" />}
-                  Create execution
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
+          {/* <StartExecution/> */}
           <div className="grid gap-6 lg:grid-cols-[2fr_3fr]">
             <Card className="h-full">
               <CardHeader className="flex flex-row items-center justify-between">
@@ -677,9 +507,9 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                             <div className="px-4 py-3 space-y-2">
                               <div className="flex items-center justify-between">
                                 <div>
-                                  <p className="font-medium">{execution.id}</p>
+                                  <p className="font-medium">{execution?.workflow?.workflowName}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    Workflow: {execution.workflowId || "Unknown"}
+                                    Execution: {execution.id || "Unknown"}
                                   </p>
                                 </div>
                                 <Badge variant={execution.status === "FAILED" ? "destructive" : execution.status === "RUNNING" ? "default" : "secondary"}>
@@ -806,7 +636,10 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                               <div key={step.id} className="p-4 space-y-2">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="font-medium">{step.nodeId}</p>
+                                    <p className="font-medium">{step.nodeType}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {step.nodeId ? `Id: ${step.nodeId}` : "Type: Unknown"}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">Step ID: {step.id}</p>
                                   </div>
                                   <Badge variant={step.status === "FAILED" ? "destructive" : step.status === "RUNNING" ? "default" : "secondary"}>
@@ -851,6 +684,14 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                         <h4 className="font-semibold flex items-center gap-2">
                           <Eye className="h-4 w-4" /> Step details
                         </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+                          <span>
+                            <span className="font-medium text-foreground">Node ID:</span> {currentStep.nodeId}
+                          </span>
+                          <span>
+                            <span className="font-medium text-foreground">Node type:</span> {currentStep.nodeType ?? "Unknown"}
+                          </span>
+                        </div>
                         <pre className="rounded-md bg-muted p-4 text-xs overflow-auto max-h-60">
                           {JSON.stringify(currentStep, null, 2)}
                         </pre>

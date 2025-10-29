@@ -177,9 +177,16 @@ export type ExecutionStepStatus =
   | "SKIPPED"
   | (string & {});
 
+
+
+export interface WorkflowExecutionState {
+  _id: string;             
+  workflowName: string;
+}
 export interface Execution {
   id: string;
   workflowId: string;
+  workflow?:WorkflowExecutionState;
   userId?: string;
   status: ExecutionStatus;
   triggerNodeId?: string;
@@ -195,6 +202,7 @@ export interface ExecutionStep {
   id: string;
   executionId: string;
   nodeId: string;
+  nodeType?:string,
   status: ExecutionStepStatus;
   createdAt: string;
   updatedAt?: string;
@@ -213,6 +221,7 @@ export type ExecutionQuery = {
 
 export type CreateExecutionPayload = {
   workflowId: string;
+  workflowName?:string;
   triggerNodeId?: string;
   triggerPayload?: unknown;
 };

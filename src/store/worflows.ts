@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { RFNode, RFEdge, ExportSchema, NodeKind } from "../types"
+import type { RFNode, RFEdge} from "../types"
 import { workFlowApi } from "@/utils/api"
 
 export interface WorkflowMetadata {
@@ -45,8 +45,6 @@ interface WorkflowsActions {
   setCurrentWorkflow: (id: string | null) => void
   saveCurrentWorkflow: (nodes: RFNode[], edges: RFEdge[], startNodeId?: string) => Promise<ActionResult | null>
   loadWorkflow: (id: string) => SavedWorkflow | null
-  exportWorkflow: (id: string) => ExportSchema | null
-  importWorkflow: (name: string, schema: ExportSchema) => Promise<ActionResult>
   clearError: () => void
   syncWithServer: () => Promise<ListResult>
 }
@@ -73,9 +71,6 @@ type ApiWorkflow = {
 interface ApiWorkflowList {
   workflows?: ApiWorkflow[]
 }
-
-type ExportConnection = { node: string; type: "main"; index: number }
-type ExportConnections = Record<string, { main: ExportConnection[][] }>
 
 const mapFromApi = (workflow: ApiWorkflow | null | undefined): SavedWorkflow => {
   if (!workflow) {
@@ -307,137 +302,7 @@ export const useWorkflowsStore = create<WorkflowsState & WorkflowsActions>((set,
     return null
   },
 
-  exportWorkflow: (id) => {
-    const workflow = get().workflows.find((w) => w.id === id)
-    if (!workflow) return null
 
-    const exportSchema: ExportSchema = {
-      data: {
-        createdAt: workflow.createdAt,
-        updatedAt: workflow.updatedAt,
-        id: workflow.id,
-        name: workflow.name,
-        active: workflow.isActive,
-        isArchived: false,
-        nodes: workflow.nodes.map((node) => ({
-          id: node.id,
-          name: node.data.parameters.name,
-          type: getNodeTypeMapping(node.data.kind),
-          typeVersion: 2.2,
-          position: [node.position.x, node.position.y],
-          parameters: node.data.parameters,
-          credentials: node.data.credentials
-            ? typeof node.data.credentials === "string"
-              ? node.data.credentials
-              : node.data.credentials._id
-            : undefined,
-          ...(node.data.webhookId && { webhookId: node.data.webhookId }),
-        })),
-        connections: buildConnections(workflow.nodes, workflow.edges),
-        settings: { executionOrder: "v1" },
-        staticData: null,
-        meta: { templateCredsSetupCompleted: true },
-        pinData: {},
-        versionId: generateId(),
-        triggerCount: 0,
-        tags: [],
-        scopes: [
-          "workflow:create",
-          "workflow:delete",
-          "workflow:execute",
-          "workflow:list",
-          "workflow:move",
-          "workflow:read",
-          "workflow:share",
-          "workflow:update",
-        ],
-      },
-    }
-
-    return exportSchema
-  },
-
-  importWorkflow: async (name, schema) => {
-    const id = generateId()
-    const now = new Date().toISOString()
-
-    const nodes: RFNode[] = schema.data.nodes.map((node) => ({
-      id: node.id,
-      type: "custom",
-      position: { x: node.position[0], y: node.position[1] },
-      data: {
-        kind: getKindFromType(node.type),
-        name: node.name,
-        parameters: node.parameters,
-        ...(node.credentials && { credentials: node.credentials }),
-        ...(node.webhookId && { webhookId: node.webhookId }),
-      },
-    }))
-
-    const edges: RFEdge[] = []
-    Object.entries(schema.data.connections).forEach(([sourceName, connections]) => {
-      const sourceNode = nodes.find((n) => n.data.parameters.name === sourceName)
-      if (!sourceNode) return
-
-      connections.main.forEach((outputConnections, outputIndex) => {
-        outputConnections.forEach((connection) => {
-          const targetNode = nodes.find((n) => n.data.parameters.name === connection.node)
-          if (!targetNode) return
-
-          edges.push({
-            id: generateId(),
-            source: sourceNode.id,
-            target: targetNode.id,
-            ...(outputIndex > 0 && {
-              data: {
-                slot: outputIndex as 0 | 1,
-                label: outputIndex === 0 ? "true" : "false",
-              },
-            }),
-          })
-        })
-      })
-    })
-
-    const startNodeId = nodes.find((n) => n.data.kind.startsWith("trigger."))?.id
-
-    const importedWorkflow: SavedWorkflow = {
-      id,
-      name,
-      description: `Imported from ${schema.data.name}`,
-      createdAt: now,
-      updatedAt: now,
-      userId: "current-user",
-      isActive: false,
-      nodes,
-      edges,
-      startNodeId,
-    }
-
-    try {
-      const payload = buildApiPayload(importedWorkflow)
-      const response = await workFlowApi.saveWorflowDb(
-        id,
-        payload.workflowName,
-        payload.description,
-        payload.nodes,
-        payload.edges,
-        payload.startNodeId,
-        payload.isActive,
-      )
-      const savedWorkflow = mapFromApi(response ?? { ...importedWorkflow, workflowId: id, workflowName: name })
-      set((state) => ({
-        workflows: [...state.workflows, savedWorkflow],
-        currentWorkflowId: savedWorkflow.id,
-        error: null,
-      }))
-      return { success: true, workflow: savedWorkflow }
-    } catch (error) {
-      console.error("Failed to import workflow", error)
-      const message = error instanceof Error ? error.message : "Failed to import workflow"
-      return { success: false, error: message }
-    }
-  },
 
   clearError: () => {
     set({ error: null })
@@ -448,76 +313,5 @@ export const useWorkflowsStore = create<WorkflowsState & WorkflowsActions>((set,
   },
 }))
 
-function getNodeTypeMapping(kind: string): string {
-  const mapping: Record<string, string> = {
-    "trigger.manual": "n8n-nodes-base.manualTrigger",
-    "trigger.form": "n8n-nodes-base.formTrigger",
-    "trigger.cron": "n8n-nodes-base.cron",
-    "logic.if": "n8n-nodes-base.if",
-    "action.telegram": "n8n-nodes-base.telegram",
-    "action.email": "n8n-nodes-base.emailSend",
-    "action.llm": "@n8n/n8n-nodes-langchain.lmChatOpenAI",
-  }
-  return mapping[kind] || kind
-}
 
-function getKindFromType(type: string): NodeKind {
-  const mapping: Record<string, NodeKind> = {
-    "n8n-nodes-base.manualTrigger": "trigger.manual",
-    "n8n-nodes-base.formTrigger": "trigger.form",
-    "n8n-nodes-base.cron": "trigger.cron",
-    "n8n-nodes-base.if": "logic.if",
-    "n8n-nodes-base.telegram": "action.telegram",
-    "n8n-nodes-base.emailSend": "action.email",
-    "@n8n/n8n-nodes-langchain.lmChatOpenAI": "action.llm",
-    "@n8n/n8n-nodes-langchain.lmChatGoogleGemini": "action.llm",
-    "@n8n/n8n-nodes-langchain.lmChatAnthropic": "action.llm",
-  }
-  return mapping[type]
-}
 
-function buildConnections(nodes: RFNode[], edges: RFEdge[]): ExportConnections {
-  const connections: ExportConnections = {}
-
-  nodes.forEach((node) => {
-    const outgoingEdges = edges.filter((edge) => edge.source === node.id)
-
-    if (outgoingEdges.length > 0) {
-      const main: ExportConnection[][] = []
-
-      if (node.data.kind === "logic.if") {
-        main[0] = []
-        main[1] = []
-
-        outgoingEdges.forEach((edge) => {
-          const targetNode = nodes.find((n) => n.id === edge.target)
-          if (targetNode) {
-            const slot = edge.data?.slot || 0
-            main[slot].push({
-              node: targetNode.data.parameters?.name,
-              type: "main",
-              index: 0,
-            })
-          }
-        })
-      } else {
-        main[0] = outgoingEdges
-          .map((edge) => {
-            const targetNode = nodes.find((n) => n.id === edge.target)
-            return targetNode
-              ? {
-                node: targetNode.data.parameters?.name ?? targetNode.id,
-                type: "main" as const,
-                index: 0,
-              }
-              : null
-          })
-          .filter((connection): connection is ExportConnection => connection !== null)
-      }
-
-      connections[node.data.parameters?.name] = { main }
-    }
-  })
-
-  return connections
-}

@@ -320,7 +320,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
     }));
   },
   getIncomingState: (nodeId) => {
-    const { startNodeId, nodes,edges } = get();
+    const { nodes,edges } = get();
 
     const triggerNode = nodes.find(n => n.id === nodeId);
     if (!triggerNode) return;
