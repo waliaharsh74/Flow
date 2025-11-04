@@ -4,6 +4,7 @@ import { workFlowApi } from "@/utils/api";
 import { useParams } from "react-router";
 import { Button } from "../components/ui/button";
 import { executionApi } from '../utils/api'
+import { Skeleton } from "./ui/skeleton";
 
 
 
@@ -109,9 +110,9 @@ const LiveForm: React.FC = () => {
         e.preventDefault();
         try {
             if (validateForm()) {
+                await executionApi.executeFormTrigger(workflowId, nodeId, values)
                 setSubmitted(true);
                 setSubmittedValues({ ...values });
-                await executionApi.executeFormTrigger(workflowId, nodeId, values)
             }
         } catch (error) {
             console.log(error)
@@ -133,9 +134,27 @@ const LiveForm: React.FC = () => {
 
         setValue(elementId, fileData);
     };
+
+    if (submitted) {
+        return(
+        <div className="text-center py-12">
+            <div className="max-w-md mx-auto">
+
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Form Submitted Successfully!</h3>
+                <Button onClick={() => window.location.href = '/'
+                }>
+                    Back to Home
+                </Button>
+
+            </div>
+        </div>)
+    }
     if (loading) return (
-        <div>
-            Loading...
+        <div className="p-4 space-y-3">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-3/4" />
+            <Skeleton className="h-24 w-full" />
         </div>
     )
     if (!isLive) return (

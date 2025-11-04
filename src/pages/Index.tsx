@@ -1,7 +1,4 @@
-import TopBar from "../components/TopBar";
-import WorkflowBuilder from "../components/WorkflowBuilder";
-import Palette from "../components/Palette";
-import SidePanel from "../components/SidePanel";
+
 import { AppState } from "@/types";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth";
@@ -9,20 +6,11 @@ import { useWorkflowsStore } from "@/store/worflows";
 import { WorkflowDashboard } from "@/components/WorkFlowDashboard";
 import { AuthPage } from "@/components/AuthPage";
 import { WorkflowEditor } from "@/components/WorkFlowEditor";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-
-    // <div className="h-screen flex flex-col bg-workflow-canvas">
-    //   <TopBar />
-    //   <div className="flex-1 flex overflow-hidden">
-    //     <Palette />
-    //     <WorkflowBuilder />
-    //     <SidePanel />
-    //   </div>
-    // </div>
-
-
-    const [appState, setAppState] = useState<AppState>("loading")
+  const navigate=useNavigate()
+  const [appState, setAppState] = useState<AppState>("loading")
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null)
 
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
@@ -78,11 +66,12 @@ const Index = () => {
   }
 
   if (appState === "editor" && currentWorkflowId) {
-    return <WorkflowEditor workflowId={currentWorkflowId} onBackToDashboard={handleBackToDashboard} />
+    navigate(`/${currentWorkflowId}`)
+    // return <WorkflowEditor workflowId={currentWorkflowId} onBackToDashboard={handleBackToDashboard} />
   }
 
   return <WorkflowDashboard onEditWorkflow={handleEditWorkflow} />
-  
+
 };
 
 export default Index;

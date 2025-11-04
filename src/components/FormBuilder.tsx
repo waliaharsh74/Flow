@@ -252,7 +252,7 @@ const FormBuilder: React.FC = () => {
             ) : (
                 <div className="container mx-auto px-4 py-8 max-w-7xl">
                     <div className='flex justify-between items-center '>
-                            <Button className='mb-8' variant="ghost" size="sm" onClick={() => navigate('/')}>
+                            <Button className='mb-8' variant="ghost" size="sm" onClick={() => navigate(`/${workflowId}`)}>
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Back to Dashboard
                             </Button>

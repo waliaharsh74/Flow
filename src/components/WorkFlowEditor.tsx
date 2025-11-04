@@ -9,13 +9,16 @@ import { useWorkflowsStore } from "../store/worflows"
 import  {Button}  from "./ui/button"
 import { ArrowLeft } from "lucide-react"
 import WorkflowBuilder from "./WorkflowBuilder"
+import { useNavigate, useParams } from "react-router-dom"
 
-interface WorkflowEditorProps {
-  workflowId: string
-  onBackToDashboard: () => void
-}
+// interface WorkflowEditorProps {
+//   workflowId: string
+//   onBackToDashboard: () => void
+// }
 
-export function WorkflowEditor({ workflowId, onBackToDashboard }: WorkflowEditorProps) {
+export function WorkflowEditor() {
+  const {workflowId}=useParams()
+  const navigate =useNavigate()
   const { selectedNodeId, nodes, edges, startNodeId, workflowName } = useWorkflowStore()
   const { loadWorkflow, saveCurrentWorkflow, updateWorkflow } = useWorkflowsStore()
 
@@ -49,7 +52,7 @@ export function WorkflowEditor({ workflowId, onBackToDashboard }: WorkflowEditor
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={onBackToDashboard}>
+        <Button variant="ghost" size="sm" onClick={()=>navigate('/')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
         </Button>

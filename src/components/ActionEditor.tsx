@@ -488,7 +488,7 @@ Resend api token                      </label>
   return (
     <div className="">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
-        <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate(`/${workflowId}`)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
         </Button>
