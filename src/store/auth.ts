@@ -20,9 +20,10 @@ interface AuthActions {
   signOut: () => Promise<void>
   clearError: () => void
   checkAuth: () => Promise<void>
+  refreshToken: () => Promise<void>
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_URL 
+const API_BASE_URL = import.meta.env.VITE_API_URL
 
 export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
@@ -41,7 +42,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
             headers: {
               "Content-Type": "application/json",
             },
-            credentials: "include", 
+            credentials: "include",
             body: JSON.stringify({ email, password }),
           })
 
@@ -52,9 +53,9 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           }
 
           if (data.msg === "Login successful") {
-         
+
             const user: User = {
-              id: email, 
+              id: email,
               email,
             }
 
@@ -167,7 +168,34 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           })
         }
       },
+      refreshToken: async () => {
+        set({ isLoading: true })
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/refresh-token`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          })
+          if(response?.ok){
+            set({
+              isLoading:false
+            })
+          }
+
+        } catch (error) {
+          set({
+            isLoading: false,
+            error: error instanceof Error ? error.message : "failed to refresh token",
+          })
+          throw error
+        }
+
+      },
     }),
+
     {
       name: "auth-storage",
       partialize: (state) => ({
