@@ -19,10 +19,39 @@ import {
   DropdownMenuTrigger,
 } from "./../components/ui/dropdown-menu"
 import { Textarea } from "./../components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select"
 import { useWorkflowsStore } from "../store/worflows"
 import { useAuthStore } from "../store/auth"
 import { formatDistanceToNow } from "date-fns"
-import { Plus, MoreVertical, Play, Copy, Trash2, Edit, FileDown, FileUp, LogOut, RefreshCcw, Rocket, PauseCircle, RotateCcw, Loader2, Activity, Trash, Eye } from "lucide-react"
+import {
+  Plus,
+  MoreVertical,
+  Play,
+  Copy,
+  Trash2,
+  Edit,
+  FileDown,
+  FileUp,
+  LogOut,
+  RefreshCcw,
+  Rocket,
+  PauseCircle,
+  RotateCcw,
+  Loader2,
+  Activity,
+  Trash,
+  Eye,
+  Search,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Switch } from "./ui/switch"
 import { ScrollArea } from "./ui/scroll-area"
@@ -41,6 +70,19 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   const [newWorkflowName, setNewWorkflowName] = useState("")
   const [newWorkflowDescription, setNewWorkflowDescription] = useState("")
   const [section, setSection] = useState<"workflows" | "credentials" | "executions">("workflows");
+  const [workflowSearch, setWorkflowSearch] = useState("")
+  const [workflowStatus, setWorkflowStatus] = useState<"all" | "active" | "inactive">("all")
+  const [workflowSort, setWorkflowSort] = useState<"name" | "updatedAt" | "createdAt" | "nodes">("updatedAt")
+  const [workflowSortDirection, setWorkflowSortDirection] = useState<"asc" | "desc">("desc")
+  const [workflowPage, setWorkflowPage] = useState(1)
+  const workflowsPerPage = 6
+
+  const [executionSearch, setExecutionSearch] = useState("")
+  const [executionStatus, setExecutionStatus] = useState<"all" | Execution["status"]>("all")
+  const [executionSort, setExecutionSort] = useState<"createdAt" | "updatedAt" | "startedAt" | "endedAt">("createdAt")
+  const [executionSortDirection, setExecutionSortDirection] = useState<"asc" | "desc">("desc")
+  const [executionPage, setExecutionPage] = useState(1)
+  const executionsPerPage = 10
 
   const { toast } = useToast();
 
@@ -77,10 +119,88 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   } = useExecutionsStore()
 
 
-
-
   const hasWorkflows = useMemo(() => workflows.length > 0, [workflows])
-  const hasExecutions = useMemo(() => executions.length > 0, [executions])
+  const filteredWorkflows = useMemo(() => {
+    const search = workflowSearch.trim().toLowerCase()
+    return workflows
+      .filter((workflow) => {
+        if (workflowStatus === "active" && !workflow.isActive) return false
+        if (workflowStatus === "inactive" && workflow.isActive) return false
+        if (!search) return true
+        return (
+          workflow.name.toLowerCase().includes(search) ||
+          (workflow.description ?? "").toLowerCase().includes(search) ||
+          workflow.id.toLowerCase().includes(search)
+        )
+      })
+      .sort((a, b) => {
+        const direction = workflowSortDirection === "asc" ? 1 : -1
+        switch (workflowSort) {
+          case "name":
+            return a.name.localeCompare(b.name) * direction
+          case "nodes":
+            return (a.nodes.length - b.nodes.length) * direction
+          case "createdAt":
+            return (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()) * direction
+          case "updatedAt":
+          default:
+            return (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()) * direction
+        }
+      })
+  }, [workflowSearch, workflowSort, workflowSortDirection, workflowStatus, workflows])
+  const totalWorkflowPages = Math.max(1, Math.ceil(filteredWorkflows.length / workflowsPerPage))
+  const paginatedWorkflows = useMemo(
+    () =>
+      filteredWorkflows.slice(
+        (workflowPage - 1) * workflowsPerPage,
+        workflowPage * workflowsPerPage,
+      ),
+    [filteredWorkflows, workflowPage, workflowsPerPage],
+  )
+
+  const filteredExecutions = useMemo(() => {
+    const search = executionSearch.trim().toLowerCase()
+    return executions
+      .filter((execution) => {
+        if (executionStatus !== "all" && execution.status !== executionStatus) return false
+        if (!search) return true
+        const workflowName =
+          typeof execution.workflow === "object" && execution.workflow !== null && "workflowName" in execution.workflow
+            ? String((execution.workflow as { workflowName?: string }).workflowName ?? "")
+            : ""
+        return (
+          execution.id.toLowerCase().includes(search) ||
+          workflowName.toLowerCase().includes(search) ||
+          execution.status.toLowerCase().includes(search)
+        )
+      })
+      .sort((a, b) => {
+        const direction = executionSortDirection === "asc" ? 1 : -1
+        const getDate = (value: string | undefined) => (value ? new Date(value).getTime() : 0)
+        switch (executionSort) {
+          case "updatedAt":
+            return (getDate(a.updatedAt) - getDate(b.updatedAt)) * direction
+          case "startedAt":
+            return (getDate(a.startedAt) - getDate(b.startedAt)) * direction
+          case "endedAt":
+            return (getDate(a.endedAt) - getDate(b.endedAt)) * direction
+          case "createdAt":
+          default:
+            return (getDate(a.createdAt) - getDate(b.createdAt)) * direction
+        }
+      })
+  }, [executionSearch, executionSort, executionSortDirection, executionStatus, executions])
+
+  const totalExecutionPages = Math.max(1, Math.ceil(filteredExecutions.length / executionsPerPage))
+  const paginatedExecutions = useMemo(
+    () =>
+      filteredExecutions.slice(
+        (executionPage - 1) * executionsPerPage,
+        executionPage * executionsPerPage,
+      ),
+    [executionPage, executionsPerPage, filteredExecutions],
+  )
+  const hasExecutions = useMemo(() => filteredExecutions.length > 0, [filteredExecutions])
 
   const selectedExecution = useMemo<Execution | null>(() => {
     if (!selectedExecutionId) return null
@@ -258,6 +378,14 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
 
   }, [toast, updateWorkflow])
 
+  useEffect(() => {
+    setWorkflowPage(1)
+  }, [workflowSearch, workflowStatus, workflowSort, workflowSortDirection])
+
+  useEffect(() => {
+    setExecutionPage(1)
+  }, [executionSearch, executionStatus, executionSort, executionSortDirection])
+
 
 
 
@@ -384,87 +512,178 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {isLoading ? (
             <div className="text-center py-12 text-gray-600">Loading workflows...</div>
-          ) : !hasWorkflows ? (
-            <div className="text-center py-12">
-              <div className="max-w-md mx-auto">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Plus className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No workflows yet</h3>
-                <p className="text-gray-600 mb-6">Create your first workflow to get started with automation</p>
-                <Button onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Workflow
-                </Button>
-              </div>
-            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {workflows.map((workflow) => (
-                <Card key={workflow.id} className="hover:shadow-md transition-shadow">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-lg truncate">{workflow.name}</CardTitle>
-                        {workflow.description && (
-                          <CardDescription className="mt-1 line-clamp-2">{workflow.description}</CardDescription>
-                        )}
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleExecuteWorkflow(workflow.id)}>
-                            <Rocket className="w-4 h-4 mr-2" />
-                            Execute
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          {/* baad m add karenge */}
-                          {/* <DropdownMenuItem onClick={() => handleDuplicateWorkflow(workflow.id)}>
-                          <Copy className="w-4 h-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem> */}
-                         
-                          <DropdownMenuItem onClick={() => handleDeleteWorkFlow(workflow.id)} className="text-destructive">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+            <div className="space-y-4">
+              {!hasWorkflows && (
+                <div className="text-center py-12">
+                  <div className="max-w-md mx-auto">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Plus className="w-8 h-8 text-gray-400" />
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                      <span>
-                        {workflow.nodes.length} node{workflow.nodes.length !== 1 ? "s" : ""}
-                      </span>
-                      <div className="flex items-center space-x-2">
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">No workflows yet</h3>
+                    <p className="text-gray-600 mb-6">Create your first workflow to get started with automation</p>
+                    <Button onClick={() => setShowCreateDialog(true)}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Your First Workflow
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {hasWorkflows && (
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <div className="relative w-full md:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        value={workflowSearch}
+                        onChange={(event) => setWorkflowSearch(event.target.value)}
+                        placeholder="Search workflows"
+                        className="pl-9"
+                      />
+                    </div>
+                    <Select value={workflowStatus} onValueChange={(value: "all" | "active" | "inactive") => setWorkflowStatus(value)}>
+                      <SelectTrigger className="w-[160px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All statuses</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={workflowSort}
+                      onValueChange={(value: "name" | "updatedAt" | "createdAt" | "nodes") => setWorkflowSort(value)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="name">Name</SelectItem>
+                        <SelectItem value="updatedAt">Updated</SelectItem>
+                        <SelectItem value="createdAt">Created</SelectItem>
+                        <SelectItem value="nodes">Node count</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setWorkflowSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
+                      aria-label="Toggle workflow sort direction"
+                    >
+                      <ArrowUpDown className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="text-sm text-gray-500">{filteredWorkflows.length} workflows found</div>
+                </div>
+              )}
+
+              {hasWorkflows && (
+                filteredWorkflows.length ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {paginatedWorkflows.map((workflow) => (
+                      <Card key={workflow.id} className="hover:shadow-md transition-shadow">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <CardTitle className="text-lg truncate">{workflow.name}</CardTitle>
+                              {workflow.description && (
+                                <CardDescription className="mt-1 line-clamp-2">{workflow.description}</CardDescription>
+                              )}
+                            </div>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleExecuteWorkflow(workflow.id)}>
+                                  <Rocket className="w-4 h-4 mr-2" />
+                                  Execute
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onEditWorkflow(workflow.id)}>
+                                  <Edit className="w-4 h-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                                {/* baad m add karenge */}
+                                {/* <DropdownMenuItem onClick={() => handleDuplicateWorkflow(workflow.id)}>
+                                <Copy className="w-4 h-4 mr-2" />
+                                Duplicate
+                              </DropdownMenuItem> */}
+
+                                <DropdownMenuItem onClick={() => handleDeleteWorkFlow(workflow.id)} className="text-destructive">
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                            <span>
+                              {workflow.nodes.length} node{workflow.nodes.length !== 1 ? "s" : ""}
+                            </span>
+                            <div className="flex items-center space-x-2">
 
 
 
-                        <Label htmlFor="active-mode">{workflow.isActive ? "Active" : "Inactive"}</Label>
-                        <Switch id="active-mode" checked={workflow.isActive} onClick={() => handleToogleSwitch(workflow.id, workflow.isActive)} >
-                        </Switch>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">
-                        Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
-                      </span>
-                      <Button size="sm" onClick={() => onEditWorkflow(workflow.id)} className="ml-2">
-                        <Play className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                              <Label htmlFor="active-mode">{workflow.isActive ? "Active" : "Inactive"}</Label>
+                              <Switch id="active-mode" checked={workflow.isActive} onClick={() => handleToogleSwitch(workflow.id, workflow.isActive)} >
+                              </Switch>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-gray-500">
+                              Updated {formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}
+                            </span>
+                            <Button size="sm" onClick={() => onEditWorkflow(workflow.id)} className="ml-2">
+                              <Play className="w-3 h-3 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-600 border rounded-lg">
+                    No workflows match your filters.
+                  </div>
+                )
+              )}
+
+              {hasWorkflows && (
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
+                  <span>
+                    Showing {filteredWorkflows.length ? (workflowPage - 1) * workflowsPerPage + 1 : 0}–
+                    {Math.min(workflowPage * workflowsPerPage, filteredWorkflows.length)} of {filteredWorkflows.length}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={workflowPage === 1}
+                      onClick={() => setWorkflowPage((page) => Math.max(1, page - 1))}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                    </Button>
+                    <span className="mx-1">
+                      Page {workflowPage} of {totalWorkflowPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={workflowPage >= totalWorkflowPages}
+                      onClick={() => setWorkflowPage((page) => Math.min(totalWorkflowPages, page + 1))}
+                    >
+                      Next <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>)}
@@ -492,10 +711,65 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                 </Button>
               </CardHeader>
               <CardContent className="p-0">
+                <div className="px-4 py-3 space-y-3 border-b">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="relative w-full md:w-64">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        <Input
+                          value={executionSearch}
+                          onChange={(event) => setExecutionSearch(event.target.value)}
+                          placeholder="Search executions"
+                          className="pl-9"
+                        />
+                      </div>
+                      <Select
+                        value={executionStatus}
+                        onValueChange={(value: "all" | Execution["status"]) => setExecutionStatus(value)}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All statuses</SelectItem>
+                          <SelectItem value="PENDING">Pending</SelectItem>
+                          <SelectItem value="RUNNING">Running</SelectItem>
+                          <SelectItem value="COMPLETED">Completed</SelectItem>
+                          <SelectItem value="FAILED">Failed</SelectItem>
+                          <SelectItem value="CANCELED">Canceled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={executionSort}
+                        onValueChange={(value: "createdAt" | "updatedAt" | "startedAt" | "endedAt") => setExecutionSort(value)}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="createdAt">Created</SelectItem>
+                          <SelectItem value="updatedAt">Updated</SelectItem>
+                          <SelectItem value="startedAt">Started</SelectItem>
+                          <SelectItem value="endedAt">Ended</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Toggle execution sort direction"
+                        onClick={() => setExecutionSortDirection((prev) => (prev === "asc" ? "desc" : "asc"))}
+                      >
+                        <ArrowUpDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="text-sm text-muted-foreground">{filteredExecutions.length} executions found</div>
+                  </div>
+                </div>
+
                 <ScrollArea className="h-[420px]">
                   <div className="divide-y">
                     {hasExecutions ? (
-                      executions.map((execution) => {
+                      paginatedExecutions.map((execution) => {
                         const isSelected = execution.id === selectedExecutionId
                         return (
                           <button
@@ -582,6 +856,36 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                     )}
                   </div>
                 </ScrollArea>
+
+                {hasExecutions && (
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-4 py-3 text-sm text-muted-foreground">
+                    <span>
+                      Showing {filteredExecutions.length ? (executionPage - 1) * executionsPerPage + 1 : 0}–
+                      {Math.min(executionPage * executionsPerPage, filteredExecutions.length)} of {filteredExecutions.length}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={executionPage === 1}
+                        onClick={() => setExecutionPage((page) => Math.max(1, page - 1))}
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                      </Button>
+                      <span className="mx-1">
+                        Page {executionPage} of {totalExecutionPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={executionPage >= totalExecutionPages}
+                        onClick={() => setExecutionPage((page) => Math.min(totalExecutionPages, page + 1))}
+                      >
+                        Next <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
