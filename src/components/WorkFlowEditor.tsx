@@ -52,7 +52,7 @@ export function WorkflowEditor() {
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={()=>navigate('/')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/auth')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Dashboard
         </Button>

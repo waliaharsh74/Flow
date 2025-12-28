@@ -51,7 +51,7 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   }
 
   if (appState === "auth") {
-    navigate('/')
+    navigate('/auth')
     
   }
 

@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import TopBar from "./components/TopBar";
+import Home from "./pages/Home";
 
 import FormBuilder from "./components/FormBuilder";
 import { SessionProvider } from "./components/SessionProvider";
@@ -23,7 +23,8 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Index />} />
             <Route path="/form/:workflowId" element={<ProtectedRoute children={<FormBuilder />} />} />
             <Route path="/form/live/:workflowId/:nodeId" element={<LiveForm />} />
             <Route path="/workflows/:workflowId/edit/action/:nodeId" element={<ProtectedRoute children={<ActionEditor />}  />}/>

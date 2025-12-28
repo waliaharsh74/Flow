@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { ArrowLeft, ChevronDown, ChevronRight, Plus, X } from "lucide-react"
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion"
+
+import { ArrowLeft, Plus, X } from "lucide-react"
 import { JsonTree } from "@/components/JsonTree"
 import { RFNode } from "@/types"
 import { useNavigate, useParams } from "react-router-dom"
@@ -17,19 +18,15 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } fr
 import { DialogFooter, DialogHeader } from "./ui/dialog"
 import { credentialApi } from "@/utils/api"
 import { useToast } from "@/hooks/use-toast"
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable"
-import { Skeleton } from "@/components/ui/skeleton" 
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup,} from "@/components/ui/resizable"
+import { Skeleton } from "@/components/ui/skeleton"
 export function ActionEditor() {
-  const { nodeId, workflowId } = useParams<{nodeId: string; workflowId: string}>()
+  const { nodeId, workflowId } = useParams<{ nodeId: string; workflowId: string }>()
   const [showDialog, setShowDialog] = useState(false)
   const [credArr, setCredArr] = useState<any[]>([])
   const [credLoader, setCredLoader] = useState(true)
   const [upstreamChain, setUpstreamChain] = useState<RFNode[]>([])
-  const [isBootstrapping, setIsBootstrapping] = useState(true)    
+  const [isBootstrapping, setIsBootstrapping] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const { toast } = useToast()
   const navigate = useNavigate()
@@ -46,26 +43,26 @@ export function ActionEditor() {
 
   useEffect(() => {
     let cancelled = false
-    ;(async () => {
-      try {
-        setIsBootstrapping(true)
-        await loadWorkflows()
-        const workflow = loadWorkflow(workflowId!)
-        if (workflow && !cancelled) {
-          useWorkflowStore.setState({
-            nodes: workflow.nodes,
-            edges: workflow.edges,
-            startNodeId: workflow.startNodeId,
-            workflowName: workflow.name,
-            selectedNodeId: nodeId,
-          })
+      ; (async () => {
+        try {
+          setIsBootstrapping(true)
+          await loadWorkflows()
+          const workflow = loadWorkflow(workflowId!)
+          if (workflow && !cancelled) {
+            useWorkflowStore.setState({
+              nodes: workflow.nodes,
+              edges: workflow.edges,
+              startNodeId: workflow.startNodeId,
+              workflowName: workflow.name,
+              selectedNodeId: nodeId,
+            })
+          }
+        } catch (e) {
+          console.error("error in getting workflow", e)
+        } finally {
+          if (!cancelled) setIsBootstrapping(false)
         }
-      } catch (e) {
-        console.error("error in getting workflow", e)
-      } finally {
-        if (!cancelled) setIsBootstrapping(false)
-      }
-    })()
+      })()
     return () => {
       cancelled = true
     }
@@ -84,6 +81,8 @@ export function ActionEditor() {
     }
     return arr
   }, [getIncomingState])
+
+
 
   const fetchCredentials = useCallback(async (kind: string) => {
     setCredLoader(true)
@@ -126,9 +125,9 @@ export function ActionEditor() {
       const req = (key: string, label: string) => { if (!credData[key]) errors.push(`${label} is required`) }
 
       if (!credData.name) errors.push("Credential name is required")
-      if (kind === "action.email") { req("resendApi","Resend api token");  }
-      if (kind === "action.telegram") { req("apiToken","Bot API Token") }
-      if (kind === "action.llm") { req("apiKey","API Key"); req("provider","Provider") }
+      if (kind === "action.email") { req("resendApi", "Resend api token"); }
+      if (kind === "action.telegram") { req("apiToken", "Bot API Token") }
+      if (kind === "action.llm") { req("apiKey", "API Key"); req("provider", "Provider") }
 
       if (errors.length) {
         toast({ title: "Missing fields", description: errors.join(", "), variant: "destructive" })
@@ -161,13 +160,13 @@ export function ActionEditor() {
       const updatedNodes = workflowData.nodes.map((node) =>
         node.id === nodeId
           ? {
-              ...node,
-              data: {
-                ...node.data,
-                parameters: { ...(node.data?.parameters ?? {}), ...formData },
-                credentials:formData?.credId?? ""
-              },
-            }
+            ...node,
+            data: {
+              ...node.data,
+              parameters: { ...(node.data?.parameters ?? {}), ...formData },
+              credentials: formData?.credId ?? ""
+            },
+          }
           : node
       )
 
@@ -247,12 +246,12 @@ export function ActionEditor() {
               <div>
                 <Label htmlFor="temperature">Temperature</Label>
                 <Input id="temperature" type="number" min="0" max="2" step="0.1" value={formData.temperature ?? 0.7}
-                       onChange={(e) => handleFormChange("temperature", Number.parseFloat(e.target.value))}/>
+                  onChange={(e) => handleFormChange("temperature", Number.parseFloat(e.target.value))} />
               </div>
               <div>
                 <Label htmlFor="maxTokens">Max Tokens</Label>
                 <Input id="maxTokens" type="number" value={formData.maxTokens ?? 1000}
-                       onChange={(e) => handleFormChange("maxTokens", Number.parseInt(e.target.value))}/>
+                  onChange={(e) => handleFormChange("maxTokens", Number.parseInt(e.target.value))} />
               </div>
             </div>
           </div>
@@ -295,7 +294,7 @@ export function ActionEditor() {
     }
   }
 
-    if (showDialog)
+  if (showDialog)
     return (
 
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -338,7 +337,7 @@ export function ActionEditor() {
                         htmlFor="resendApi"
                         className="block text-sm font-medium text-gray-700 mb-1"
                       >
-Resend api token                      </label>
+                        Resend api token                      </label>
                       <input
                         id="resendApi"
                         type="text"
@@ -350,7 +349,7 @@ Resend api token                      </label>
                         className="w-full px-3 py-2 border border-gray-300 rounded-md"
                       />
 
-                      
+
                     </>
                   );
 
@@ -508,30 +507,31 @@ Resend api token                      </label>
                 ) : !upstreamChain?.length ? (
                   <div className="p-4 text-center text-muted-foreground">No upstream nodes</div>
                 ) : (
-                  <div className="space-y-2">
+                  <Accordion
+                    type="single"
+                    collapsible className="space-y-2">
                     {upstreamChain.map((node, index) => (
-                      <Collapsible key={node.id} defaultOpen={index === upstreamChain.length - 1}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-3 hover:bg-muted/50 border-b">
+                      <AccordionItem value={node.id} key={node.id} >
+                        <AccordionTrigger className=" group flex items-center justify-between w-full p-3 hover:bg-muted/50 border-b">
                           <div className="flex items-center gap-2">
-                            <ChevronRight className="h-4 w-4 transition-transform data-[state=open]:hidden" />
-                            <ChevronDown className="h-4 w-4 transition-transform hidden data-[state=open]:block" />
+
                             <span className="font-medium">{node.data.kind}</span>
                             <span className="text-xs text-muted-foreground">
                               ({node.data.parameters?.name ?? "unnamed"})
                             </span>
                           </div>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="px-3 pb-3">
+                        </AccordionTrigger>
+                        <AccordionContent className="px-3 pb-3">
                           <div className="space-y-3">
                             <div>
                               <h4 className="text-sm font-medium mb-2">Parameters</h4>
                               <JsonTree data={node.data.parameters} id={node.id} />
                             </div>
                           </div>
-                        </CollapsibleContent>
-                      </Collapsible>
+                        </AccordionContent >
+                      </AccordionItem>
                     ))}
-                  </div>
+                  </Accordion>
                 )}
               </div>
             </CardContent>
@@ -563,7 +563,7 @@ Resend api token                      </label>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <Button onClick={handleCreateClick}  className="w-full">
+                          <Button onClick={handleCreateClick} className="w-full">
                             <Plus className="w-4 h-4 mr-1" />
                             Create new credential
                           </Button>
