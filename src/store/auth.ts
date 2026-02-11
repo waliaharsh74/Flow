@@ -37,7 +37,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/sign-up`, {
+          const response = await fetch(`${API_BASE_URL}/auth/sign-up`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
         set({ isLoading: true, error: null })
 
         try {
-          const response = await fetch(`${API_BASE_URL}/sign-in`, {
+          const response = await fetch(`${API_BASE_URL}/auth/sign-in`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

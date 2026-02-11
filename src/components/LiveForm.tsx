@@ -141,7 +141,7 @@ const LiveForm: React.FC = () => {
             <div className="max-w-md mx-auto">
 
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Form Submitted Successfully!</h3>
-                <Button onClick={() => window.location.href = '/'
+                <Button onClick={() => window.location.href = '/auth'
                 }>
                     Back to Home
                 </Button>

@@ -44,13 +44,13 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
 
 export const authApi = {
   signIn: (email: string, password: string) =>
-    apiRequest("/sign-up", {
+    apiRequest("/auth/sign-up", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
 
   signUp: (email: string, password: string) =>
-    apiRequest("/sign-in", {
+    apiRequest("/auth/sign-in", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
@@ -204,7 +204,7 @@ export const executionApi = {
     }),
 
   getExecutionStep: (stepId: string) =>
-    apiRequest(`/execution-steps/${encodeURIComponent(stepId)}`, {
+    apiRequest(`/executions/steps/${encodeURIComponent(stepId)}`, {
       method: "GET",
     }),
 
