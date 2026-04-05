@@ -263,10 +263,7 @@ export const executionApi = {
       method: "DELETE",
     }),
 
-  getExecutionSteps: (executionId: string) =>
-    apiRequest(`/executions/${encodeURIComponent(executionId)}/steps`, {
-      method: "GET",
-    }),
+
 
   getExecutionStep: (stepId: string) =>
     apiRequest(`/executions/steps/${encodeURIComponent(stepId)}`, {
