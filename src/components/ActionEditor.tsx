@@ -485,7 +485,7 @@ export function ActionEditor() {
   )
 
   return (
-    <div className="">
+    <div className="container">
       <div className="container mx-auto px-4 py-4 max-w-7xl">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/${workflowId}`)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -600,7 +600,7 @@ export function ActionEditor() {
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize={40}>
+        {/* <ResizablePanel defaultSize={40}>
           <Card className="overflow-hidden">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Outputs</CardTitle>
@@ -619,7 +619,7 @@ export function ActionEditor() {
               )}
             </CardContent>
           </Card>
-        </ResizablePanel>
+        </ResizablePanel> */}
       </ResizablePanelGroup>
     </div>
   )

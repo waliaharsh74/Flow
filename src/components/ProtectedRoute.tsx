@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
-import { useNavigate } from "react-router-dom"
+import { Navigate } from "react-router-dom"
 
 import { useAuthStore } from "../store/auth"
 import { AppState } from "@/types"
@@ -13,8 +13,6 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
-  const navigate=useNavigate()
-
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
       const [appState, setAppState] = useState<AppState>("loading")
   
@@ -51,8 +49,7 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   }
 
   if (appState === "auth") {
-    navigate('/auth')
-    
+    return <Navigate to="/auth" replace />
   }
 
   return <>{children}</>

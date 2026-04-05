@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
+import type { AuthProvider } from "@/types"
+import { useLocation, useNavigate } from "react-router-dom"
 import { Button } from "./../components/ui/button"
 import { Input } from "./../components/ui/input"
 import { Label } from "./../components/ui/label"
@@ -51,6 +53,7 @@ import {
   ArrowUpDown,
   ChevronLeft,
   ChevronRight,
+  Link2,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Switch } from "./ui/switch"
@@ -85,6 +88,8 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   const executionsPerPage = 10
 
   const { toast } = useToast();
+  const location = useLocation()
+  const navigate = useNavigate()
 
 
   const { 
@@ -97,7 +102,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
      updateWorkflow
      } =
     useWorkflowsStore()
-  const { user, signOut } = useAuthStore()
+  const { user, signOut, linkOAuthProvider, isLoading: isAuthBusy } = useAuthStore()
   const {
     executions,
     executionSteps,
@@ -211,6 +216,10 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     if (!selectedStepId) return null
     return stepDetails[selectedStepId] ?? executionSteps.find((step) => step.id === selectedStepId) ?? null
   }, [executionSteps, selectedStepId, stepDetails])
+  const linkedProviders = useMemo(
+    () => new Set((user?.providers ?? []).map((provider) => provider.provider)),
+    [user],
+  )
 
 
   const handleCreateWorkflow = useCallback(async () => {
@@ -378,6 +387,17 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
 
   }, [toast, updateWorkflow])
 
+  const handleLinkProvider = useCallback(
+    async (provider: AuthProvider) => {
+      try {
+        await linkOAuthProvider(provider)
+      } catch (error) {
+        console.error(error)
+      }
+    },
+    [linkOAuthProvider],
+  )
+
   useEffect(() => {
     setWorkflowPage(1)
   }, [workflowSearch, workflowStatus, workflowSort, workflowSortDirection])
@@ -420,6 +440,21 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
   }, [clearExecutionsError, executionsError, toast])
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const message = params.get("message")
+
+    if (!message || !user) return
+
+    toast({
+      title: params.get("error") ? "Authentication issue" : "Authentication updated",
+      description: message,
+      variant: params.get("error") ? "destructive" : "default",
+    })
+
+    navigate(location.pathname, { replace: true })
+  }, [location.pathname, location.search, navigate, toast, user])
+
+  useEffect(() => {
     if (!user) return
     if (error) {
       toast({
@@ -438,6 +473,13 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Workflow Builder</h1>
               <p className="text-sm text-gray-600">Welcome back, {user?.email}</p>
+              {/* <div className="mt-2 flex flex-wrap items-center gap-2">
+                {(["google", "github"] as AuthProvider[]).map((provider) => (
+                  <Badge key={provider} variant={linkedProviders.has(provider) ? "default" : "secondary"}>
+                    {provider[0].toUpperCase() + provider.slice(1)} {linkedProviders.has(provider) ? "linked" : "not linked"}
+                  </Badge>
+                ))}
+              </div> */}
             </div>
             <div className="mt-2 inline-flex rounded-xl border bg-white overflow-hidden">
               {(["workflows", "credentials", "executions"] as const).map(s => (
@@ -454,7 +496,26 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
               ))}
             </div>
             <div className="flex items-center gap-4">
-             
+              {/* <div className="flex flex-col gap-3 rounded-xl border bg-white px-3 py-2 lg:flex-row lg:items-center">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-gray-700">Link providers</p>
+                  <p className="text-xs text-muted-foreground">Connect Google or GitHub to this account.</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(["google", "github"] as AuthProvider[]).map((provider) => (
+                    <Button
+                      key={provider}
+                      variant="outline"
+                      size="sm"
+                      disabled={linkedProviders.has(provider) || isAuthBusy}
+                      onClick={() => handleLinkProvider(provider)}
+                    >
+                      <Link2 className="mr-2 h-3.5 w-3.5" />
+                      {linkedProviders.has(provider) ? `${provider} linked` : `Link ${provider}`}
+                    </Button>
+                  ))}
+                </div>
+              </div> */}
 
               <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogTrigger asChild>

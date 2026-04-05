@@ -10,6 +10,25 @@ export type NodeKind =
   | 'action.llm';
 
 export type AppState = "loading" | "auth" | "dashboard" | "editor" | "authenticated"
+export type AuthMode = "signin" | "signup";
+
+export type AuthProvider = "google" | "github";
+
+export interface AuthProviderIdentity {
+  provider: AuthProvider;
+  providerUserId?: string;
+  email?: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName?: string;
+  avatarUrl?: string;
+  providers?: AuthProviderIdentity[];
+  authProviders?: AuthProviderIdentity[];
+  linkedProviders?: Array<AuthProvider | AuthProviderIdentity>;
+}
 
 export interface FormField {
   fieldLabel: string;

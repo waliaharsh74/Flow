@@ -13,6 +13,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import LiveForm from "./components/LiveForm";
 import { ActionEditor } from "./components/ActionEditor";
 import { WorkflowEditor } from "./components/WorkFlowEditor";
+import AuthCallback from "./pages/AuthCallback";
 
 
 const App = () => (
@@ -25,6 +26,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Index />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/form/:workflowId" element={<ProtectedRoute children={<FormBuilder />} />} />
             <Route path="/form/live/:workflowId/:nodeId" element={<LiveForm />} />
             <Route path="/workflows/:workflowId/edit/action/:nodeId" element={<ProtectedRoute children={<ActionEditor />}  />}/>

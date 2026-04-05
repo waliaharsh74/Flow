@@ -5,11 +5,9 @@ import { useAuthStore } from "@/store/auth";
 import { useWorkflowsStore } from "@/store/worflows";
 import { WorkflowDashboard } from "@/components/WorkFlowDashboard";
 import { AuthPage } from "@/components/AuthPage";
-import { WorkflowEditor } from "@/components/WorkFlowEditor";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 
 const Index = () => {
-  const navigate=useNavigate()
   const [appState, setAppState] = useState<AppState>("loading")
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null)
 
@@ -66,8 +64,7 @@ const Index = () => {
   }
 
   if (appState === "editor" && currentWorkflowId) {
-    navigate(`/${currentWorkflowId}`)
-    // return <WorkflowEditor workflowId={currentWorkflowId} onBackToDashboard={handleBackToDashboard} />
+    return <Navigate to={`/${currentWorkflowId}`} replace />
   }
 
   return <WorkflowDashboard onEditWorkflow={handleEditWorkflow} />

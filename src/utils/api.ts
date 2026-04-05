@@ -1,4 +1,4 @@
-import { NodeKind, RFEdge, RFNode ,Credential} from "@/types"
+import { AuthMode, AuthProvider, AuthUser, NodeKind, RFEdge, RFNode ,Credential} from "@/types"
 
 const API_BASE_URL = import.meta.env.VITE_API_URL
 
@@ -26,14 +26,61 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
 
   try {
     const response = await fetch(url, config)
+    const data = await parseResponseBody(response)
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new ApiError(response.status, errorData.msg || `HTTP ${response.status}`)
+      const message =
+        typeof data === "object" && data !== null && "msg" in data
+          ? String(data.msg)
+          : `HTTP ${response.status}`
+      throw new ApiError(response.status, message)
     }
 
-    const data = await response.json()
-    return data
+    return data as T
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error
+    }
+    throw new ApiError(0, "Network error")
+  }
+}
+
+async function parseResponseBody(response: Response) {
+  const contentType = response.headers.get("content-type") ?? ""
+
+  if (contentType.includes("application/json")) {
+    return response.json()
+  }
+
+  const text = await response.text()
+  return text ? { msg: text } : {}
+}
+
+export async function apiRequestRaw<T = any>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`
+
+  const config: RequestInit = {
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+    ...options,
+  }
+
+  try {
+    const response = await fetch(url, config)
+    const data = await parseResponseBody(response)
+
+    if (!response.ok) {
+      const message =
+        typeof data === "object" && data !== null && "msg" in data
+          ? String(data.msg)
+          : `HTTP ${response.status}`
+      throw new ApiError(response.status, message)
+    }
+
+    return data as T
   } catch (error) {
     if (error instanceof ApiError) {
       throw error
@@ -43,29 +90,47 @@ export async function apiRequest<T = any>(endpoint: string, options: RequestInit
 }
 
 export const authApi = {
-  signIn: (email: string, password: string) =>
-    apiRequest("/sign-up", {
+  login: (email: string, password: string) =>
+    apiRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
 
-  signUp: (email: string, password: string) =>
-    apiRequest("/sign-in", {
+  register: (email: string, password: string, turnstileToken: string) =>
+    apiRequest("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, turnstileToken }),
     }),
 
   signOut: () =>
-    apiRequest("/logout", {
+    apiRequestRaw("/auth/logout", {
       method: "POST",
     }),
 
-  getProfile: () => apiRequest("/me"),
+  getProfile: () => apiRequest<AuthUser>("/auth/me"),
 
   refreshToken: () =>
-    apiRequest("/refresh-token", {
+    apiRequestRaw("/auth/refresh-token", {
       method: "POST",
     }),
+
+  startOAuth: (provider: AuthProvider, intent: AuthMode, turnstileToken?: string | null) =>
+    apiRequestRaw<{ url?: string; redirectUrl?: string; authorizationUrl?: string; authUrl?: string }>(
+      `/auth/oauth/${provider}/start`,
+      {
+        method: "POST",
+        body: JSON.stringify({ intent, turnstileToken }),
+      },
+    ),
+
+  startOAuthLink: (provider: AuthProvider) =>
+    apiRequestRaw<{ url?: string; redirectUrl?: string; authorizationUrl?: string; authUrl?: string }>(
+      `/auth/oauth/${provider}/link-start`,
+      {
+        method: "POST",
+        body: JSON.stringify({}),
+      },
+    ),
 }
 
 export const workFlowApi = {
@@ -204,7 +269,7 @@ export const executionApi = {
     }),
 
   getExecutionStep: (stepId: string) =>
-    apiRequest(`/execution-steps/${encodeURIComponent(stepId)}`, {
+    apiRequest(`/executions/steps/${encodeURIComponent(stepId)}`, {
       method: "GET",
     }),
 
