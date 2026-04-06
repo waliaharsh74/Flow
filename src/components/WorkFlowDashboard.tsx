@@ -398,6 +398,11 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
     [linkOAuthProvider],
   )
 
+  const handleSignOut = useCallback(async () => {
+    await signOut()
+    navigate("/auth", { replace: true })
+  }, [navigate, signOut])
+
   useEffect(() => {
     setWorkflowPage(1)
   }, [workflowSearch, workflowStatus, workflowSort, workflowSortDirection])
@@ -560,7 +565,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                 </DialogContent>
               </Dialog>
 
-              <Button variant="outline" onClick={signOut}>
+              <Button variant="outline" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
               </Button>

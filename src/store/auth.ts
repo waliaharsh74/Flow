@@ -134,7 +134,12 @@ export const useAuthStore = create<AuthState & AuthActions>()(
       },
 
       signOut: async () => {
-        set({ isLoading: true })
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: true,
+          error: null,
+        })
 
         try {
           await authApi.signOut()
