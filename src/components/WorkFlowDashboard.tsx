@@ -879,7 +879,7 @@ export function WorkflowDashboard({ onEditWorkflow }: WorkflowDashboardProps) {
                                 >
                                   <Eye className="h-3 w-3 mr-1" /> View
                                 </Button>
-                                {execution.status !== "RUNNING" && execution.status !== "COMPLETED" && (
+                                {["PENDING", "FAILED"].includes(execution.status) && (
                                   <Button
                                     variant="outline"
                                     size="sm"

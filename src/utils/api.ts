@@ -252,6 +252,11 @@ export const executionApi = {
       method: "GET",
     }),
 
+  getExecutionSteps: (id: string) =>
+    apiRequest(`/executions/${encodeURIComponent(id)}/steps`, {
+      method: "GET",
+    }),
+
   updateExecutionStatus: (id: string, status: ExecutionStatusUpdate) =>
     apiRequest(`/executions/${encodeURIComponent(id)}`, {
       method: "PATCH",

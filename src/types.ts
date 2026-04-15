@@ -183,6 +183,7 @@ export type FormValues = Record<string, any>;
 export type ExecutionStatus =
   | "PENDING"
   | "RUNNING"
+  | "SUCCEEDED"
   | "COMPLETED"
   | "FAILED"
   | "CANCELED"
@@ -191,9 +192,11 @@ export type ExecutionStatus =
 export type ExecutionStepStatus =
   | "PENDING"
   | "RUNNING"
+  | "SUCCEEDED"
   | "COMPLETED"
   | "FAILED"
   | "SKIPPED"
+  | "CANCELED"
   | (string & {});
 
 
