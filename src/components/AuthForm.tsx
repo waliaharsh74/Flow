@@ -125,7 +125,7 @@ export function AuthForm({ mode, onToggleMode, oauthMessage }: AuthFormProps) {
             </Alert>
           )}
 
-          <div className="space-y-3">
+          {/* <div className="space-y-3">
             <Button type="button" variant="outline" className="w-full" disabled={isLoading || (isSignUp && !turnstileSiteKey)} onClick={() => handleOAuth("google")}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
               <span className="ml-2">{isSignUp ? "Sign up with Google" : "Continue with Google"}</span>
@@ -134,16 +134,16 @@ export function AuthForm({ mode, onToggleMode, oauthMessage }: AuthFormProps) {
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Github className="h-4 w-4" />}
               <span className="ml-2">{isSignUp ? "Sign up with GitHub" : "Continue with GitHub"}</span>
             </Button>
-          </div>
+          </div> */}
 
-          <div className="my-6">
+          {/* <div className="my-6">
             <div className="relative">
               <Separator />
               <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs uppercase tracking-wide text-muted-foreground">
                 Or use email
               </span>
             </div>
-          </div>
+          </div> */}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
